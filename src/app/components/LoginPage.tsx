@@ -52,15 +52,19 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen relative flex items-center justify-center p-4" style={{ backgroundColor: '#F7F5EC' }}>
       <IslamicPattern opacity={0.55} />
       <div className="relative z-10 w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-3" style={{ backgroundColor: '#0F354D' }}>
-            <svg viewBox="0 0 40 40" width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 4 L20 36 M4 20 L36 20 M7 7 L33 33 M33 7 L7 33" stroke="#C9A054" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="20" cy="20" r="7" stroke="#C9A054" strokeWidth="1.5" />
-              <circle cx="20" cy="20" r="2.5" fill="#C9A054" />
-            </svg>
-          </div>
+       {/* Logo/Header Diperbarui */}
+<div className="text-center mb-6 flex flex-col items-center">
+  <div className="w-24 h-24 mb-3 flex items-center justify-center">
+    <img 
+      src="/src/img/Logo Al-Fayyadh.png" // Sesuaikan path ini dengan lokasi gambar logo Anda
+      alt="Logo Mudarasah Al-Fayyadh" 
+      className="w-full h-full object-contain"
+    />
+  </div>
+  {/* Tambahkan Judul Teks Kembali Jika Perlu, Sesuai Gambar Asli */}
+  <h1 className="text-2xl font-bold text-[#0F354D]">Mudarasah Asatidz Al-Fayyadh</h1>
+  <p className="text-sm text-gray-600">Sistem Mudarasah Digital</p>
+</div>
           <h1 className="text-xl mb-0.5" style={{ fontFamily: "'Amiri', Georgia, serif", color: '#0F354D', fontWeight: 700 }}>
             Mudarasah Asatidz Al-Fayyadh
           </h1>
@@ -156,6 +160,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
        
       </div>
-    </div>
+    
   );
 }
