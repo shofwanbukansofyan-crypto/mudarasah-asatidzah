@@ -154,12 +154,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </div>
         </div>
 
-        <div className="text-center mt-6">
-          <p className="text-xs" style={{ color: '#A08060' }}>
-            Demo: <span className="font-medium">admin@mudarasah.com</span> / <span className="font-medium">ahmad@mudarasah.com</span> / <span className="font-medium">rafi@mudarasah.com</span>
-          </p>
-          <p className="text-xs mt-1" style={{ color: '#A08060' }}>Password: admin123 / guru123 / asatidz123</p>
-        </div>
+       
       </div>
     </div>
   );
