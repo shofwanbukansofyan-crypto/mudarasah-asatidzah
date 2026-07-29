@@ -56,7 +56,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 <div className="text-center mb-6 flex flex-col items-center">
   <div className="w-24 h-24 mb-3 flex items-center justify-center">
     <img 
-      src="/src/img/Logo Al-Fayyadh.jpg" // Sesuaikan path ini dengan lokasi gambar logo Anda
+      src="/img/Logo Al-Fayyadh.jpg" // Sesuaikan path ini dengan lokasi gambar logo Anda
       alt="Logo Mudarasah Al-Fayyadh" 
       className="w-full h-full object-contain"
     />
