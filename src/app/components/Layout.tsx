@@ -91,12 +91,12 @@ export function Layout({ user, onLogout }: LayoutProps) {
       {/* Logo */}
       <div className="px-5 py-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(201,160,84,0.2)' }}>
-            <svg viewBox="0 0 32 32" width="22" height="22" fill="none">
-              <path d="M16 3 L16 29 M3 16 L29 16 M5.5 5.5 L26.5 26.5 M26.5 5.5 L5.5 26.5" stroke="#C9A054" strokeWidth="1.5" strokeLinecap="round" />
-              <circle cx="16" cy="16" r="5.5" stroke="#C9A054" strokeWidth="1.5" />
-              <circle cx="16" cy="16" r="2" fill="#C9A054" />
-            </svg>
+          <div className="flex-shrink-0 w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center bg-[#0F354D] shadow-sm">
+            <img 
+              src="/img/Logo Al-Fayyadh.jpg" 
+              alt="Logo Al-Fayyadh" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="min-w-0">
             <p className="text-xs leading-tight" style={{ fontFamily: "'Amiri', serif", color: '#C9A054', fontWeight: 700 }}>
