@@ -51,28 +51,26 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4" style={{ backgroundColor: '#F7F5EC' }}>
       <IslamicPattern opacity={0.55} />
-      <div className="relative z-10 w-full max-w-md">
-       {/* Logo/Header Diperbarui */}
-<div className="text-center mb-6 flex flex-col items-center">
-  <div className="w-24 h-24 mb-3 flex items-center justify-center">
-    <img 
-      src={"/img/Logo Al-Fayyadh.jpg"} // Sesuaikan path ini dengan lokasi gambar logo Anda
-      alt={"Logo Mudarasah Al-Fayyadh"}
-      className={"w-full h-full object-contain"}
-    />
-  </div>
-  {/* Tambahkan Judul Teks Kembali Jika Perlu, Sesuai Gambar Asli */}
-  <h1 className="text-2xl font-bold text-[#0F354D]">Mudarasah Asatidz Al-Fayyadh</h1>
-  <p className="text-sm text-gray-600">Sistem Mudarasah Digital</p>
-</div>
+      
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+        
+        {/* Logo & Header Utama */}
+        <div className="text-center mb-6 flex flex-col items-center">
+          <div className="w-24 h-24 mb-3 flex items-center justify-center rounded-2xl overflow-hidden shadow-sm bg-[#0F354D] p-1.5">
+            <img 
+              src="/img/Logo Al-Fayyadh.jpg" 
+              alt="Logo Mudarasah Al-Fayyadh" 
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
           <h1 className="text-xl mb-0.5" style={{ fontFamily: "'Amiri', Georgia, serif", color: '#0F354D', fontWeight: 700 }}>
             Mudarasah Asatidz Al-Fayyadh
           </h1>
           <p className="text-sm" style={{ color: '#8B7355' }}>Sistem Mudarasah Digital</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
+        {/* Card Form */}
+        <div className="w-full bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
           {/* Arabic bismillah header */}
           <div className="px-8 pt-6 pb-4 border-b border-border" style={{ background: 'linear-gradient(135deg, #0F354D 0%, #1a4f70 100%)' }}>
             <p className="text-center text-lg mb-1" style={{ fontFamily: "'Amiri', serif", color: '#C9A054', direction: 'rtl' }}>
@@ -142,14 +140,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               {view === 'login' ? (
                 <p className="text-sm" style={{ color: '#8B7355' }}>
                   Belum punya akun?{' '}
-                  <button onClick={() => { setView('register'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
+                  <button type="button" onClick={() => { setView('register'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
                     Buat Akun Baru
                   </button>
                 </p>
               ) : (
                 <p className="text-sm" style={{ color: '#8B7355' }}>
                   Sudah punya akun?{' '}
-                  <button onClick={() => { setView('login'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
+                  <button type="button" onClick={() => { setView('login'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
                     Masuk Sekarang
                   </button>
                 </p>
@@ -158,8 +156,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </div>
         </div>
 
-       
       </div>
-    
+    </div>
   );
 }
