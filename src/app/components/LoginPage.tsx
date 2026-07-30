@@ -18,19 +18,27 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setError('');
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.email || !form.password) { setError('Email dan password wajib diisi.'); return; }
     setLoading(true);
-    setTimeout(() => {
-      const user = UserStore.login(form.email.trim(), form.password);
-      if (!user) { setError('Email atau password salah.'); setLoading(false); return; }
+    try {
+      // Gunakan await karena UserStore bersifat asynchronous (mengambil data dari API)
+      const user = await UserStore.login(form.email.trim(), form.password);
+      if (!user) { 
+        setError('Email atau password salah.'); 
+        setLoading(false); 
+        return; 
+      }
       onLogin(user);
-    }, 300);
+    } catch (err) {
+      setError('Terjadi kesalahan pada server.');
+      setLoading(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.username || !form.email || !form.password || !form.confirmPassword) {
@@ -38,12 +46,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
     if (form.password.length < 6) { setError('Password minimal 6 karakter.'); return; }
     if (form.password !== form.confirmPassword) { setError('Password tidak cocok.'); return; }
-    if (UserStore.getByEmail(form.email.trim())) { setError('Email sudah terdaftar.'); return; }
+    
     setLoading(true);
-    setTimeout(() => {
-      const user = UserStore.create({ username: form.username.trim(), email: form.email.trim(), password: form.password, role: 'asatidz' });
+    try {
+      const user = await UserStore.create({
+  username: form.username.trim(),
+  email: form.email.trim(),
+  password: form.password,
+  role: 'asatidz'
+});
+      if (!user) {
+        setError('Gagal mendaftarkan akun.');
+        setLoading(false);
+        return;
+      }
       onLogin(user);
-    }, 300);
+    } catch (err) {
+      setError('Terjadi kesalahan pada server.');
+      setLoading(false);
+    }
   };
 
   const inputCls = 'w-full px-4 py-2.5 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition';

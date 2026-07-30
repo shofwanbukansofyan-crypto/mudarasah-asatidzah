@@ -140,24 +140,37 @@ export function initStore(): void {
 }
 
 export const UserStore = {
-  getAll: () => load<User>(KEYS.users, []),
-  getById: (id: string) => load<User>(KEYS.users, []).find(u => u.id === id),
-  getByEmail: (email: string) => load<User>(KEYS.users, []).find(u => u.email === email),
-  login: (email: string, password: string) =>
-    load<User>(KEYS.users, []).find(u => u.email === email && u.password === password),
-  create: (data: Omit<User, 'id' | 'createdAt'>) => {
-    const users = load<User>(KEYS.users, []);
-    const newUser: User = { ...data, id: 'u' + genId(), createdAt: new Date().toISOString().split('T')[0] };
-    save(KEYS.users, [...users, newUser]);
-    return newUser;
+  async login(email: string, pass: string) {
+    try {
+      const res = await fetch('https://url-backend-railway-anda/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      return data;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
   },
-  update: (id: string, data: Partial<User>) => {
-    const users = load<User>(KEYS.users, []);
-    save(KEYS.users, users.map(u => u.id === id ? { ...u, ...data } : u));
-  },
-  delete: (id: string) => {
-    save(KEYS.users, load<User>(KEYS.users, []).filter(u => u.id !== id));
-  },
+
+  async create(userData: { username: string; email: string; password: string; role: string }) {
+    try {
+      const res = await fetch('https://url-backend-railway-anda/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      return data;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
 };
 
 export const HalaqahStore = {
