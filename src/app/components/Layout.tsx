@@ -110,9 +110,9 @@ export function Layout({ user, onLogout }: LayoutProps) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <p className="px-4 text-xs mb-2 uppercase tracking-wider" style={{ color: 'rgba(227,218,201,0.4)' }}>Menu Utama</p>
-        {user.role === 'admin' && adminNav(activeTab, (t) => { setActiveTab(t); setSidebarOpen(false); })}
-        {user.role === 'guru' && guruNav(activeTab, (t) => { setActiveTab(t); setSidebarOpen(false); })}
-        {user.role === 'asatidz' && asatidzNav(activeTab, (t) => { setActiveTab(t); setSidebarOpen(false); })}
+        {user.role === 'admin' && adminNav(activeTab, (t: ActiveTab) => { setActiveTab(t); setSidebarOpen(false); })}
+        {user.role === 'guru' && guruNav(activeTab, (t: ActiveTab) => { setActiveTab(t); setSidebarOpen(false); })}
+        {user.role === 'asatidz' && asatidzNav(activeTab, (t: ActiveTab) => { setActiveTab(t); setSidebarOpen(false); })}
       </nav>
 
       {/* User */}
@@ -170,9 +170,9 @@ export function Layout({ user, onLogout }: LayoutProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {user.role === 'admin' && <AdminPanel user={user} activeTab={activeTab as AdminTab} setActiveTab={(t) => setActiveTab(t)} />}
-          {user.role === 'guru' && <GuruPanel user={user} activeTab={activeTab as GuruTab} setActiveTab={(t) => setActiveTab(t)} />}
-          {user.role === 'asatidz' && <AsatidzPanel user={user} activeTab={activeTab as AsatidzTab} setActiveTab={(t) => setActiveTab(t)} />}
+          {user.role === 'admin' && <AdminPanel user={user} activeTab={activeTab as AdminTab} setActiveTab={(t: AdminTab) => setActiveTab(t)} />}
+          {user.role === 'guru' && <GuruPanel user={user} activeTab={activeTab as GuruTab} setActiveTab={(t: GuruTab) => setActiveTab(t)} />}
+          {user.role === 'asatidz' && <AsatidzPanel user={user} activeTab={activeTab as AsatidzTab} setActiveTab={(t: AsatidzTab) => setActiveTab(t)} />}
         </div>
       </div>
     </div>

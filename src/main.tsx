@@ -1,7 +1,14 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './app/App'
+import './styles/globals.css'
+import { initializeStore } from './app/store' // Tambahkan baris import ini
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
+// Panggil inisialisasi background untuk menarik data dari Railway
+initializeStore(); 
 
-  createRoot(document.getElementById("root")!).render(<App />);
-  
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)

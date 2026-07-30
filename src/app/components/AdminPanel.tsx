@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import type { User, Halaqah } from '../types';
 import type { UserRole } from '../types';
-import { UserStore, HalaqahStore, KitabStore, JadwalStore, SoalStore } from '../store';
-import { Users, BookOpen, Calendar, LayoutDashboard, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { UserStore, HalaqahStore, KitabStore, JadwalStore, SoalStore } from '../../app/store';
+import { Users, BookOpen, Plus, Pencil, Trash2, X } from 'lucide-react';
 
 type AdminTab = 'dashboard' | 'halaqah' | 'akun';
 
@@ -55,7 +55,6 @@ function Modal({ open, title, onClose, children }: { open: boolean; title: strin
 
 const inputCls = 'w-full px-3.5 py-2.5 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm transition';
 const btnPrimary = 'px-4 py-2 rounded-lg text-sm font-medium text-white transition-all';
-const btnDanger = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all';
 
 // ---- Dashboard ----
 function DashboardSection({ user }: { user: User }) {
@@ -158,10 +157,8 @@ function HalaqahSection() {
       UserStore.update(form.guruId, { halaqahId: newH.id });
       form.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: newH.id }));
     } else if (selected) {
-      // Remove old associations
       UserStore.update(selected.guruId, { halaqahId: undefined });
       selected.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: undefined }));
-      // Set new
       HalaqahStore.update(selected.id, { name: form.name.trim(), guruId: form.guruId, memberIds: form.memberIds });
       UserStore.update(form.guruId, { halaqahId: selected.id });
       form.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: selected.id }));
@@ -260,7 +257,7 @@ function HalaqahSection() {
           </div>
           <div className="flex gap-3 pt-2">
             <button onClick={() => setModal(null)} className="flex-1 py-2 rounded-lg border border-border text-sm transition hover:bg-muted" style={{ color: '#705C3B' }}>Batal</button>
-            <button onClick={handleSave} className={`flex-1 py-2 rounded-lg text-sm font-medium text-white`} style={{ background: '#0F354D' }}>Simpan</button>
+            <button onClick={handleSave} className="flex-1 py-2 rounded-lg text-sm font-medium text-white" style={{ background: '#0F354D' }}>Simpan</button>
           </div>
         </div>
       </Modal>
