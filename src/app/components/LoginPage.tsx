@@ -1,144 +1,182 @@
 import { useState } from 'react';
 import type { User } from '../types';
 import { UserStore } from '../store';
-import { Lock, Mail, User as UserIcon } from 'lucide-react';
+import { IslamicPattern } from './IslamicPattern';
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [view, setView] = useState<'login' | 'register'>('login');
+  const [form, setForm] = useState({ email: '', password: '', username: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, [k]: e.target.value }));
+    setError('');
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!form.email || !form.password) { setError('Email dan password wajib diisi.'); return; }
     setLoading(true);
-
     try {
-      if (isRegister) {
-        if (!username.trim() || !email.trim() || !password.trim()) {
-          setError('Semua kolom wajib diisi.');
-          setLoading(false);
-          return;
-        }
-        const newUser = await UserStore.create({
-          username: username.trim(),
-          email: email.trim(),
-          password,
-          role: 'asatidz'
-        });
-        if (!newUser) throw new Error('Gagal mendaftarkan akun.');
-        onLogin(newUser);
-      } else {
-        if (!email.trim() || !password.trim()) {
-          setError('Email dan password wajib diisi.');
-          setLoading(false);
-          return;
-        }
-        const user = await UserStore.login(email.trim(), password);
-        if (!user) throw new Error('Email atau password salah.');
-        onLogin(user);
+      // Gunakan await karena UserStore bersifat asynchronous (mengambil data dari API)
+      const user = await UserStore.login(form.email.trim(), form.password);
+      if (!user) { 
+        setError('Email atau password salah.'); 
+        setLoading(false); 
+        return; 
       }
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan.');
-    } finally {
+      onLogin(user);
+    } catch (err) {
+      setError('Terjadi kesalahan pada server.');
       setLoading(false);
     }
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!form.username || !form.email || !form.password || !form.confirmPassword) {
+      setError('Semua field wajib diisi.'); return;
+    }
+    if (form.password.length < 6) { setError('Password minimal 6 karakter.'); return; }
+    if (form.password !== form.confirmPassword) { setError('Password tidak cocok.'); return; }
+    
+    setLoading(true);
+    try {
+      const user = await UserStore.create({
+  username: form.username.trim(),
+  email: form.email.trim(),
+  password: form.password,
+  role: 'asatidz'
+});
+      if (!user) {
+        setError('Gagal mendaftarkan akun.');
+        setLoading(false);
+        return;
+      }
+      onLogin(user);
+    } catch (err) {
+      setError('Terjadi kesalahan pada server.');
+      setLoading(false);
+    }
+  };
+
+  const inputCls = 'w-full px-4 py-2.5 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition';
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#F7F5EC] overflow-y-auto">
-      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-auto">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden shadow-md flex items-center justify-center bg-[#0F354D]">
-            <img src="/img/Logo Al-Fayyadh.jpg" alt="Logo Al-Fayyadh" className="w-full h-full object-cover" />
+    <div className="min-h-screen relative flex items-center justify-center p-4" style={{ backgroundColor: '#F7F5EC' }}>
+      <IslamicPattern opacity={0.55} />
+      
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center">
+        
+        {/* Logo & Header Utama */}
+        <div className="text-center mb-6 flex flex-col items-center">
+          <div className="w-24 h-24 mb-3 flex items-center justify-center rounded-2xl overflow-hidden shadow-sm bg-[#0F354D] p-1.5">
+            <img 
+              src="/img/Logo Al-Fayyadh.jpg" 
+              alt="Logo Mudarasah Al-Fayyadh" 
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "'Amiri', serif", color: '#0F354D' }}>
-            Mudarasah Al-Fayyadh
+          <h1 className="text-xl mb-0.5" style={{ fontFamily: "'Amiri', Georgia, serif", color: '#0F354D', fontWeight: 700 }}>
+            Mudarasah Asatidz Al-Fayyadh
           </h1>
-          <p className="text-xs mt-1" style={{ color: '#8B7355' }}>Sistem Informasi Mudarasah Digital</p>
+          <p className="text-sm" style={{ color: '#8B7355' }}>Sistem Mudarasah Digital</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-3 rounded-xl text-sm text-center font-medium bg-red-50 text-red-700 border border-red-200">
-            {error}
+        {/* Card Form */}
+        <div className="w-full bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
+          {/* Arabic bismillah header */}
+          <div className="px-8 pt-6 pb-4 border-b border-border" style={{ background: 'linear-gradient(135deg, #0F354D 0%, #1a4f70 100%)' }}>
+            <p className="text-center text-lg mb-1" style={{ fontFamily: "'Amiri', serif", color: '#C9A054', direction: 'rtl' }}>
+              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+            </p>
+            <p className="text-center text-sm" style={{ color: 'rgba(227,218,201,0.8)' }}>
+              {view === 'login' ? 'Masuk ke Akun Anda' : 'Daftar Akun Baru'}
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isRegister && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#705C3B' }}>Nama Lengkap</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground"><UserIcon size={16} /></span>
-                <input
-                  type="text"
-                  required
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A054]"
-                  placeholder="Nama lengkap"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                />
+          <div className="px-8 py-6">
+            {error && (
+              <div className="mb-4 px-4 py-2.5 rounded-lg text-sm border" style={{ background: '#FEF2F2', borderColor: '#FECACA', color: '#991B1B' }}>
+                {error}
               </div>
-            </div>
-          )}
+            )}
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#705C3B' }}>Email</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground"><Mail size={16} /></span>
-              <input
-                type="email"
-                required
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A054]"
-                placeholder="email@contoh.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
+            {view === 'login' ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Email</label>
+                  <input type="email" placeholder="email@contoh.com" className={inputCls} value={form.email} onChange={set('email')} />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
+                  <input type="password" placeholder="••••••••" className={inputCls} value={form.password} onChange={set('password')} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 rounded-lg font-medium text-white transition-all duration-200 mt-2"
+                  style={{ background: loading ? '#4A7B9D' : '#0F354D' }}
+                >
+                  {loading ? 'Memproses...' : 'Masuk'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Nama Lengkap</label>
+                  <input type="text" placeholder="Masukkan nama lengkap" className={inputCls} value={form.username} onChange={set('username')} />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Email</label>
+                  <input type="email" placeholder="email@contoh.com" className={inputCls} value={form.email} onChange={set('email')} />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
+                  <input type="password" placeholder="Min. 6 karakter" className={inputCls} value={form.password} onChange={set('password')} />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Konfirmasi Password</label>
+                  <input type="password" placeholder="Ulangi password" className={inputCls} value={form.confirmPassword} onChange={set('confirmPassword')} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-2.5 rounded-lg font-medium text-white transition-all duration-200 mt-2"
+                  style={{ background: loading ? '#4A7B9D' : '#0F354D' }}
+                >
+                  {loading ? 'Memproses...' : 'Daftar'}
+                </button>
+              </form>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-border text-center">
+              {view === 'login' ? (
+                <p className="text-sm" style={{ color: '#8B7355' }}>
+                  Belum punya akun?{' '}
+                  <button type="button" onClick={() => { setView('register'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
+                    Buat Akun Baru
+                  </button>
+                </p>
+              ) : (
+                <p className="text-sm" style={{ color: '#8B7355' }}>
+                  Sudah punya akun?{' '}
+                  <button type="button" onClick={() => { setView('login'); setError(''); setForm({ email: '', password: '', username: '', confirmPassword: '' }); }} className="font-medium hover:underline" style={{ color: '#705C3B' }}>
+                    Masuk Sekarang
+                  </button>
+                </p>
+              )}
             </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#705C3B' }}>Password</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground"><Lock size={16} /></span>
-              <input
-                type="password"
-                required
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border bg-input-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A054]"
-                placeholder="••••••••"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl text-sm font-semibold text-white transition shadow-md hover:opacity-95 disabled:opacity-50"
-            style={{ backgroundColor: '#0F354D' }}
-          >
-            {loading ? 'Memproses...' : isRegister ? 'Daftar Akun' : 'Masuk Sistem'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => { setIsRegister(!isRegister); setError(''); }}
-            className="text-xs font-medium hover:underline transition"
-            style={{ color: '#C9A054' }}
-          >
-            {isRegister ? 'Sudah punya akun? Masuk di sini' : 'Belum punya akun? Daftar sebagai Asatidz'}
-          </button>
         </div>
+
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { User, Halaqah, Kitab, Jadwal, Soal } from '../types';
+import { useState, useCallback } from 'react';
+import type { User, Halaqah } from '../types';
 import type { UserRole } from '../types';
-import { UserStore, HalaqahStore, KitabStore, JadwalStore, SoalStore } from '../../app/store';
-import { Users, BookOpen, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { UserStore, HalaqahStore, KitabStore, JadwalStore, SoalStore } from '../store';
+import { Users, BookOpen, Calendar, LayoutDashboard, Plus, Pencil, Trash2, X } from 'lucide-react';
 
 type AdminTab = 'dashboard' | 'halaqah' | 'akun';
 
@@ -55,43 +55,14 @@ function Modal({ open, title, onClose, children }: { open: boolean; title: strin
 
 const inputCls = 'w-full px-3.5 py-2.5 rounded-lg border border-border bg-input-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm transition';
 const btnPrimary = 'px-4 py-2 rounded-lg text-sm font-medium text-white transition-all';
+const btnDanger = 'px-3 py-1.5 rounded-lg text-xs font-medium transition-all';
 
-// ---- Dashboard Section ----
+// ---- Dashboard ----
 function DashboardSection({ user }: { user: User }) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [halaqah, setHalaqah] = useState<Halaqah[]>([]);
-  const [kitab, setKitab] = useState<Kitab[]>([]);
-  const [jadwal, setJadwal] = useState<Jadwal[]>([]);
-  const [soalCount, setSoalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [u, h, k, j, s] = await Promise.all([
-          UserStore.getAll(),
-          HalaqahStore.getAll(),
-          KitabStore.getAll(),
-          JadwalStore.getAll(),
-          SoalStore.getAll()
-        ]);
-        setUsers(u);
-        setHalaqah(h);
-        setKitab(k);
-        setJadwal(j);
-        setSoalCount(s.length);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  if (loading) {
-    return <div className="p-8 text-center text-sm" style={{ color: '#8B7355' }}>Menghubungkan ke Cloud Railway...</div>;
-  }
+  const users = UserStore.getAll();
+  const halaqah = HalaqahStore.getAll();
+  const kitab = KitabStore.getAll();
+  const jadwal = JadwalStore.getAll();
 
   const totalGuru = users.filter(u => u.role === 'guru').length;
   const totalAsatidz = users.filter(u => u.role === 'asatidz').length;
@@ -100,7 +71,7 @@ function DashboardSection({ user }: { user: User }) {
     <div>
       <PageHeader
         title="Dashboard Admin"
-        subtitle={`Selamat datang, ${user.username}. Kelola sistem mudarasah dari cloud.`}
+        subtitle={`Selamat datang, ${user.username}. Kelola sistem mudarasah dari sini.`}
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -121,9 +92,9 @@ function DashboardSection({ user }: { user: User }) {
               <div key={h.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div>
                   <p className="text-sm font-medium" style={{ color: '#3D2C1E' }}>{h.name}</p>
-                  <p className="text-xs" style={{ color: '#8B7355' }}>{guru?.username || '-'} · {h.memberIds?.length || 0} anggota</p>
+                  <p className="text-xs" style={{ color: '#8B7355' }}>{guru?.username || '-'} · {h.memberIds.length} anggota</p>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E3F4ED', color: '#1B5E3B' }}>{h.memberIds?.length || 0} orang</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E3F4ED', color: '#1B5E3B' }}>{h.memberIds.length} orang</span>
               </div>
             );
           })}
@@ -136,7 +107,7 @@ function DashboardSection({ user }: { user: User }) {
               { label: 'Total Pengguna', val: users.length },
               { label: 'Total Jadwal', val: jadwal.length },
               { label: 'Total Kitab', val: kitab.length },
-              { label: 'Total Soal Simulasi', val: soalCount },
+              { label: 'Total Soal Simulasi', val: SoalStore.getAll().length },
             ].map(item => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-sm" style={{ color: '#705C3B' }}>{item.label}</span>
@@ -152,24 +123,14 @@ function DashboardSection({ user }: { user: User }) {
 
 // ---- Halaqah Management ----
 function HalaqahSection() {
-  const [halaqah, setHalaqah] = useState<Halaqah[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [halaqah, setHalaqah] = useState(() => HalaqahStore.getAll());
+  const [users, setUsers] = useState(() => UserStore.getAll());
   const [modal, setModal] = useState<'create' | 'edit' | null>(null);
+  const [selected, setSelected] = useState<Halaqah | null>(null);
   const [form, setForm] = useState({ name: '', guruId: '', memberIds: [] as string[] });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
-  const refresh = async () => {
-    const [h, u] = await Promise.all([HalaqahStore.getAll(), UserStore.getAll()]);
-    setHalaqah(h);
-    setUsers(u);
-  };
-
-  useEffect(() => {
-    refresh().finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="p-8 text-center text-sm" style={{ color: '#8B7355' }}>Memuat data halaqah...</div>;
+  const refresh = () => { setHalaqah(HalaqahStore.getAll()); setUsers(UserStore.getAll()); };
 
   const gurus = users.filter(u => u.role === 'guru');
   const asatidzList = users.filter(u => u.role === 'asatidz');
@@ -177,23 +138,43 @@ function HalaqahSection() {
   const openCreate = () => {
     setForm({ name: '', guruId: '', memberIds: [] });
     setError('');
+    setSelected(null);
     setModal('create');
   };
 
-  const handleSave = async () => {
+  const openEdit = (h: Halaqah) => {
+    setForm({ name: h.name, guruId: h.guruId, memberIds: [...h.memberIds] });
+    setError('');
+    setSelected(h);
+    setModal('edit');
+  };
+
+  const handleSave = () => {
     if (!form.name.trim()) { setError('Nama halaqah wajib diisi.'); return; }
     if (!form.guruId) { setError('Pilih guru terlebih dahulu.'); return; }
 
     if (modal === 'create') {
-      await HalaqahStore.create({ name: form.name.trim(), guruId: form.guruId, memberIds: form.memberIds });
+      const newH = HalaqahStore.create({ name: form.name.trim(), guruId: form.guruId, memberIds: form.memberIds });
+      UserStore.update(form.guruId, { halaqahId: newH.id });
+      form.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: newH.id }));
+    } else if (selected) {
+      // Remove old associations
+      UserStore.update(selected.guruId, { halaqahId: undefined });
+      selected.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: undefined }));
+      // Set new
+      HalaqahStore.update(selected.id, { name: form.name.trim(), guruId: form.guruId, memberIds: form.memberIds });
+      UserStore.update(form.guruId, { halaqahId: selected.id });
+      form.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: selected.id }));
     }
     setModal(null);
     refresh();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Hapus halaqah ini?')) return;
-    await HalaqahStore.delete(id);
+  const handleDelete = (h: Halaqah) => {
+    if (!confirm(`Hapus halaqah "${h.name}"? Semua anggota akan dikeluarkan dari halaqah ini.`)) return;
+    UserStore.update(h.guruId, { halaqahId: undefined });
+    h.memberIds.forEach(mid => UserStore.update(mid, { halaqahId: undefined }));
+    HalaqahStore.delete(h.id);
     refresh();
   };
 
@@ -213,12 +194,13 @@ function HalaqahSection() {
         <div className="bg-card rounded-xl border border-border p-12 text-center shadow-sm">
           <Users size={40} className="mx-auto mb-3" style={{ color: '#C4B99A' }} />
           <p className="font-medium" style={{ color: '#705C3B' }}>Belum ada halaqah</p>
+          <p className="text-sm mt-1" style={{ color: '#8B7355' }}>Klik "Buat Halaqah" untuk membuat grup mudarasah baru.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {halaqah.map(h => {
             const guru = users.find(u => u.id === h.guruId);
-            const members = users.filter(u => h.memberIds?.includes(u.id));
+            const members = users.filter(u => h.memberIds.includes(u.id));
             return (
               <div key={h.id} className="bg-card rounded-xl border border-border p-5 shadow-sm">
                 <div className="flex items-start justify-between mb-3">
@@ -226,15 +208,22 @@ function HalaqahSection() {
                     <h3 className="font-semibold" style={{ color: '#0F354D', fontFamily: "'Amiri', serif" }}>{h.name}</h3>
                     <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>Guru: {guru?.username || 'Tidak ada'}</p>
                   </div>
-                  <button onClick={() => handleDelete(h.id)} className="p-1.5 rounded-lg transition hover:bg-red-50" style={{ color: '#C0392B' }}><Trash2 size={15} /></button>
+                  <div className="flex gap-2">
+                    <button onClick={() => openEdit(h)} className="p-1.5 rounded-lg transition hover:bg-muted" style={{ color: '#705C3B' }}><Pencil size={15} /></button>
+                    <button onClick={() => handleDelete(h)} className="p-1.5 rounded-lg transition hover:bg-red-50" style={{ color: '#C0392B' }}><Trash2 size={15} /></button>
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs mb-2 font-medium" style={{ color: '#705C3B' }}>Anggota ({members.length} orang):</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {members.map(m => (
-                      <span key={m.id} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: '#D4C9B0', color: '#705C3B', backgroundColor: '#F0EDE3' }}>{m.username}</span>
-                    ))}
-                  </div>
+                  {members.length === 0 ? (
+                    <p className="text-xs italic" style={{ color: '#8B7355' }}>Belum ada anggota</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {members.map(m => (
+                        <span key={m.id} className="text-xs px-2 py-0.5 rounded-full border" style={{ borderColor: '#D4C9B0', color: '#705C3B', backgroundColor: '#F0EDE3' }}>{m.username}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -242,7 +231,7 @@ function HalaqahSection() {
         </div>
       )}
 
-      <Modal open={!!modal} title="Buat Halaqah Baru" onClose={() => setModal(null)}>
+      <Modal open={!!modal} title={modal === 'create' ? 'Buat Halaqah Baru' : 'Edit Halaqah'} onClose={() => setModal(null)}>
         {error && <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#991B1B' }}>{error}</p>}
         <div className="space-y-4">
           <div>
@@ -263,13 +252,15 @@ function HalaqahSection() {
                 <label key={a.id} className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted transition">
                   <input type="checkbox" checked={form.memberIds.includes(a.id)} onChange={() => toggleMember(a.id)} className="rounded" />
                   <span className="text-sm" style={{ color: '#3D2C1E' }}>{a.username}</span>
+                  <span className="text-xs ml-auto" style={{ color: '#8B7355' }}>{a.email}</span>
                 </label>
               ))}
+              {asatidzList.length === 0 && <p className="px-3 py-2 text-sm" style={{ color: '#8B7355' }}>Belum ada akun asatidz.</p>}
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setModal(null)} className="flex-1 py-2 rounded-lg border border-border text-sm">Batal</button>
-            <button onClick={handleSave} className="flex-1 py-2 rounded-lg text-sm font-medium text-white" style={{ background: '#0F354D' }}>Simpan</button>
+            <button onClick={() => setModal(null)} className="flex-1 py-2 rounded-lg border border-border text-sm transition hover:bg-muted" style={{ color: '#705C3B' }}>Batal</button>
+            <button onClick={handleSave} className={`flex-1 py-2 rounded-lg text-sm font-medium text-white`} style={{ background: '#0F354D' }}>Simpan</button>
           </div>
         </div>
       </Modal>
@@ -279,30 +270,53 @@ function HalaqahSection() {
 
 // ---- Account Management ----
 function AkunSection() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState(() => UserStore.getAll());
+  const [modal, setModal] = useState<'create' | 'edit' | null>(null);
+  const [selected, setSelected] = useState<User | null>(null);
+  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'asatidz' as UserRole });
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const refresh = async () => {
-    const u = await UserStore.getAll();
-    setUsers(u);
-  };
-
-  useEffect(() => {
-    refresh().finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="p-8 text-center text-sm" style={{ color: '#8B7355' }}>Memuat data akun...</div>;
+  const refresh = () => setUsers(UserStore.getAll());
 
   const filtered = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = async (u: User) => {
+  const openCreate = () => {
+    setForm({ username: '', email: '', password: '', role: 'asatidz' });
+    setError('');
+    setSelected(null);
+    setModal('create');
+  };
+
+  const openEdit = (u: User) => {
+    setForm({ username: u.username, email: u.email, password: '', role: u.role });
+    setError('');
+    setSelected(u);
+    setModal('edit');
+  };
+
+  const handleSave = () => {
+    if (!form.username.trim() || !form.email.trim()) { setError('Nama dan email wajib diisi.'); return; }
+    if (modal === 'create') {
+      if (!form.password) { setError('Password wajib diisi.'); return; }
+      if (UserStore.getByEmail(form.email.trim())) { setError('Email sudah terdaftar.'); return; }
+      UserStore.create({ username: form.username.trim(), email: form.email.trim(), password: form.password, role: form.role });
+    } else if (selected) {
+      const upd: Partial<User> = { username: form.username.trim(), email: form.email.trim(), role: form.role };
+      if (form.password) upd.password = form.password;
+      UserStore.update(selected.id, upd);
+    }
+    setModal(null);
+    refresh();
+  };
+
+  const handleDelete = (u: User) => {
     if (u.role === 'admin') { alert('Akun admin tidak dapat dihapus.'); return; }
     if (!confirm(`Hapus akun "${u.username}"?`)) return;
-    await UserStore.delete(u.id);
+    UserStore.delete(u.id);
     refresh();
   };
 
@@ -314,36 +328,78 @@ function AkunSection() {
 
   return (
     <div>
-      <PageHeader title="Kelola Akun" subtitle="Pantau semua akun yang terdaftar di cloud." />
+      <PageHeader title="Kelola Akun" subtitle="Tambah, edit, dan pantau semua akun yang terdaftar.">
+        <button onClick={openCreate} className={btnPrimary} style={{ background: '#0F354D' }}>
+          <Plus size={16} className="inline mr-1.5" />Tambah Akun
+        </button>
+      </PageHeader>
+
       <div className="mb-4">
         <input className={inputCls} placeholder="Cari nama atau email..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
+
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr style={{ backgroundColor: '#F0EDE3', borderBottom: '1px solid #D4C9B0' }}>
-              {['Nama', 'Email', 'Role', 'Terdaftar', 'Aksi'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase" style={{ color: '#705C3B' }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u, i) => (
-              <tr key={u.id} style={{ backgroundColor: i % 2 === 0 ? '#FDFBF4' : '#FAF8F0', borderBottom: '1px solid #EDE8DC' }}>
-                <td className="px-4 py-3 font-medium" style={{ color: '#3D2C1E' }}>{u.username}</td>
-                <td className="px-4 py-3" style={{ color: '#705C3B' }}>{u.email}</td>
-                <td className="px-4 py-3">{roleBadge(u.role)}</td>
-                <td className="px-4 py-3 text-xs" style={{ color: '#8B7355' }}>{u.createdAt || '-'}</td>
-                <td className="px-4 py-3">
-                  {u.role !== 'admin' && (
-                    <button onClick={() => handleDelete(u)} className="p-1 rounded hover:bg-red-50 transition" style={{ color: '#C0392B' }}><Trash2 size={14} /></button>
-                  )}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ backgroundColor: '#F0EDE3', borderBottom: '1px solid #D4C9B0' }}>
+                {['Nama', 'Email', 'Role', 'Terdaftar', 'Aksi'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: '#705C3B' }}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((u, i) => (
+                <tr key={u.id} style={{ backgroundColor: i % 2 === 0 ? '#FDFBF4' : '#FAF8F0', borderBottom: '1px solid #EDE8DC' }}>
+                  <td className="px-4 py-3 font-medium" style={{ color: '#3D2C1E' }}>{u.username}</td>
+                  <td className="px-4 py-3" style={{ color: '#705C3B' }}>{u.email}</td>
+                  <td className="px-4 py-3">{roleBadge(u.role)}</td>
+                  <td className="px-4 py-3 text-xs" style={{ color: '#8B7355' }}>{u.createdAt}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(u)} className="p-1 rounded hover:bg-muted transition" style={{ color: '#705C3B' }}><Pencil size={14} /></button>
+                      {u.role !== 'admin' && <button onClick={() => handleDelete(u)} className="p-1 rounded hover:bg-red-50 transition" style={{ color: '#C0392B' }}><Trash2 size={14} /></button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: '#8B7355' }}>Tidak ada akun ditemukan.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <Modal open={!!modal} title={modal === 'create' ? 'Tambah Akun Baru' : 'Edit Akun'} onClose={() => setModal(null)}>
+        {error && <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#991B1B' }}>{error}</p>}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Nama Lengkap</label>
+            <input className={inputCls} placeholder="Nama lengkap" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Email</label>
+            <input type="email" className={inputCls} placeholder="email@contoh.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>{modal === 'edit' ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}</label>
+            <input type="password" className={inputCls} placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+          </div>
+          <div>
+            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Level Akses</label>
+            <select className={inputCls} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))}>
+              <option value="asatidz">Asatidz</option>
+              <option value="guru">Guru</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setModal(null)} className="flex-1 py-2 rounded-lg border border-border text-sm transition hover:bg-muted" style={{ color: '#705C3B' }}>Batal</button>
+            <button onClick={handleSave} className="flex-1 py-2 rounded-lg text-sm font-medium text-white" style={{ background: '#0F354D' }}>Simpan</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
