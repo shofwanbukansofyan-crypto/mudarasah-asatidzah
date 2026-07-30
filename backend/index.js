@@ -101,6 +101,24 @@ app.post('/api/halaqah', async (req, res) => {
   }
 });
 
+app.put('/api/halaqah/:id', async (req, res) => {
+  try {
+    const { nama, deskripsi, guruId, memberIds } = req.body;
+    const updated = await prisma.halaqah.update({
+      where: { id: req.params.id },
+      data: { 
+        nama, 
+        deskripsi, 
+        guruId, 
+        memberIds // <-- Ini yang bakal nyimpen data Fadhil dkk
+      }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/halaqah/:id', async (req, res) => {
   try {
     await prisma.halaqah.delete({ where: { id: req.params.id } });

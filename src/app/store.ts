@@ -42,17 +42,24 @@ export async function initializeStore() {
       }
     };
 
-    // Saat buka web, narik data dari DB Indo, diubah jadi Eng buat Frontend
     await Promise.all([
-      fetchAndMap('users', KEYS.users, u => u),
-      fetchAndMap('halaqah', KEYS.halaqah, h => ({ ...h, name: h.nama, description: h.deskripsi, memberIds: h.memberIds || [] })),
-      fetchAndMap('kitab', KEYS.kitab, k => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl })),
-      fetchAndMap('jadwal', KEYS.jadwal, j => ({ ...j, date: j.hari, time: j.jam, topic: j.materi })),
-      fetchAndMap('absensi', KEYS.absensi, a => a),
-      fetchAndMap('soal', KEYS.soal, s => {
+      fetchAndMap('users', KEYS.users, (u: any) => u),
+      
+      // PERBAIKAN: Baca JSON memberIds jadi Array
+      fetchAndMap('halaqah', KEYS.halaqah, (h: any) => {
+        let parsedMembers = [];
+        try { parsedMembers = typeof h.memberIds === 'string' ? JSON.parse(h.memberIds) : (h.memberIds || []); } catch {}
+        return { ...h, name: h.nama, description: h.deskripsi, memberIds: parsedMembers };
+      }),
+      
+      fetchAndMap('kitab', KEYS.kitab, (k: any) => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl })),
+      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, topic: j.materi })),
+      fetchAndMap('absensi', KEYS.absensi, (a: any) => a),
+      
+      fetchAndMap('soal', KEYS.soal, (s: any) => {
         let parsedQ = [];
         try { parsedQ = typeof s.pertanyaan === 'string' ? JSON.parse(s.pertanyaan) : s.pertanyaan; } catch {}
-        return { ...s, title: s.judul, questions: parsedQ };
+        return { ...s, title: s.judul, description: s.deskripsi || '', jadwalId: s.jadwalId || '', deadline: s.deadline || '', questions: parsedQ };
       }),
     ]);
   } catch (e) {
@@ -125,21 +132,34 @@ export const HalaqahStore = {
     const newH: Halaqah = { ...data, id: 'h' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.halaqah, [...list, newH]);
     
-    // MAPPER POST: Frontend (Eng) -> Database (Indo)
     fetch(`${API_URL}/halaqah`, { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify({
         nama: newH.name,
         deskripsi: (newH as any).description || '',
-        guruId: newH.guruId
+        guruId: newH.guruId,
+        memberIds: JSON.stringify(newH.memberIds || []) 
       }) 
     }).catch(console.error);
     return newH;
   },
   
   update(id: string, data: Partial<Halaqah>) {
-    save(KEYS.halaqah, load<Halaqah>(KEYS.halaqah, []).map(h => h.id === id ? { ...h, ...data } : h));
+    const list = load<Halaqah>(KEYS.halaqah, []);
+    const updatedHalaqah = { ...list.find(h => h.id === id), ...data } as Halaqah;
+    save(KEYS.halaqah, list.map(h => h.id === id ? updatedHalaqah : h));
+    
+    fetch(`${API_URL}/halaqah/${id}`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({
+        nama: updatedHalaqah.name,
+        deskripsi: (updatedHalaqah as any).description || '',
+        guruId: updatedHalaqah.guruId,
+        memberIds: JSON.stringify(updatedHalaqah.memberIds || []) 
+      }) 
+    }).catch(console.error);
   },
   
   delete(id: string) {
@@ -159,7 +179,6 @@ export const KitabStore = {
     const newK: Kitab = { ...data, id: 'k' + genId(), uploadedAt: new Date().toISOString().split('T')[0] };
     save(KEYS.kitab, [...list, newK]);
     
-    // MAPPER POST: Frontend (Eng) -> Database (Indo)
     fetch(`${API_URL}/kitab`, { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
@@ -193,7 +212,6 @@ export const JadwalStore = {
     const newJ: Jadwal = { ...data, id: 'j' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.jadwal, [...list, newJ]);
     
-    // MAPPER POST: Frontend (Eng) -> Database (Indo)
     fetch(`${API_URL}/jadwal`, { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
@@ -241,7 +259,7 @@ export const AbsensiStore = {
 export const SoalStore = {
   getAll: (): Soal[] => load<Soal>(KEYS.soal, []),
   getByHalaqah: (halaqahId: string): Soal[] => load<Soal>(KEYS.soal, []).filter(s => s.halaqahId === halaqahId),
-  getByGuru: (guruId: string): Soal[] => load<Soal>(KEYS.soal, []).filter(s => s.guruId === guruId),
+  getByGuru: (guruId: string): Soal[] => load<Soal>(KEYS.soal, []).filter(s => (s as any).guruId === guruId),
   getById: (id: string): Soal | undefined => load<Soal>(KEYS.soal, []).find(s => s.id === id),
   
   create(data: Omit<Soal, 'id' | 'createdAt'>): Soal {
@@ -249,12 +267,14 @@ export const SoalStore = {
     const newS: Soal = { ...data, id: 's' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.soal, [...list, newS]);
     
-    // MAPPER POST: Frontend (Eng) -> Database (Indo)
     fetch(`${API_URL}/soal`, { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify({
         judul: newS.title,
+        deskripsi: (newS as any).description || '',
+        jadwalId: (newS as any).jadwalId || null,
+        deadline: (newS as any).deadline || null,
         pertanyaan: JSON.stringify(newS.questions),
         halaqahId: newS.halaqahId
       }) 

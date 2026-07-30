@@ -22,16 +22,20 @@ model User {
 }
 
 model Halaqah {
-  id        String   @id @default(uuid())
-  nama      String
-  deskripsi String?
-  guruId    String
-  guru      User     @relation(fields: [guruId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  nama        String
+  deskripsi   String?
+  guruId      String
+  guru        User     @relation(fields: [guruId], references: [id], onDelete: Cascade)
+  
+  // TAMBAHAN: Laci buat nyimpen daftar asatidz (format JSON String)
+  memberIds   String?  
+  
+  createdAt   DateTime @default(now())
 
-  kitab     Kitab[]
-  jadwal    Jadwal[]
-  soal      Soal[]
+  kitab       Kitab[]
+  jadwal      Jadwal[]
+  soal        Soal[]
 }
 
 model Kitab {
