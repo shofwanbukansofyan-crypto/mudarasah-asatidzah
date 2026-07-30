@@ -1,16 +1,22 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './app/App'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './app/App';
 
-// @ts-ignore: Mengabaikan warning TS untuk import file CSS
-import './styles/globals.css'
-import { initializeStore } from './app/store'
+// Panggil semua CSS inti lu di sini biar Tailwind beneran nyala!
+// @ts-ignore
+import './styles/tailwind.css';
+// @ts-ignore
+import './styles/index.css';
+// @ts-ignore
+import './styles/globals.css';
 
-// Tarik data dari Railway di background saat web diload
+import { initializeStore } from './app/store';
+
+// Inisialisasi API Railway
 initializeStore();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-)
+);
