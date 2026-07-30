@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@theme {
+  /* Mengembalikan warna tema Mudarasah yang sempat hilang */
+  --color-background: #F7F5EC;
+  --color-foreground: #3D2C1E;
+  --color-card: #FFFFFF;
+  --color-border: #D4C9B0;
+  --color-input-background: #FFFFFF;
+  --color-muted: #F0EDE3;
+  --color-muted-foreground: #8B7355;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
