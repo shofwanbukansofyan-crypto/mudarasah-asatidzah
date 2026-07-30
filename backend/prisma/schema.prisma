@@ -68,23 +68,26 @@ model Absensi {
 }
 
 model Soal {
-  id        String   @id @default(uuid())
-  judul     String
-  pertanyaan String
-  halaqahId String
-  halaqah   Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  judul       String
+  deskripsi   String?  // <-- Laci baru buat nyimpen deskripsi
+  jadwalId    String?  // <-- Laci baru buat nyimpen jadwal
+  deadline    String?  // <-- Laci baru buat nyimpen deadline
+  pertanyaan  String
+  halaqahId   String
+  halaqah     Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
 
   submissions SoalSubmission[]
 }
 
 model SoalSubmission {
-  id        String   @id @default(uuid())
-  soalId    String
-  soal      Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jawaban   String
-  nilai     Int?
+  id          String   @id @default(uuid())
+  soalId      String
+  soal        Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jawaban     String
+  nilai       Int?
   submittedAt DateTime @default(now())
 }

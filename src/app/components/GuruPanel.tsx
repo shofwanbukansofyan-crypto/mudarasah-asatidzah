@@ -64,8 +64,11 @@ function formatDate(d: string) {
 function DashboardSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const jadwal = halaqah ? JadwalStore.getByHalaqah(halaqah.id) : [];
-  const kitab = KitabStore.getByGuru(user.id);
-  const soal = SoalStore.getByGuru(user.id);
+  
+  // PERBAIKAN: Menggunakan getByHalaqah
+  const kitab = halaqah ? KitabStore.getByHalaqah(halaqah.id) : [];
+  const soal = halaqah ? SoalStore.getByHalaqah(halaqah.id) : [];
+  
   const today = new Date().toISOString().split('T')[0];
   const upcoming = jadwal.filter(j => j.date >= today).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -223,15 +226,17 @@ const COVER_COLORS = ['#0F354D', '#1B4D3E', '#4A3728', '#5C3317', '#2C3E50', '#6
 
 function KitabSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
-  const [kitab, setKitab] = useState(() => KitabStore.getByGuru(user.id));
+  
+  // PERBAIKAN: Menggunakan getByHalaqah
+  const [kitab, setKitab] = useState(() => halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
   
-  // Mengubah state fileUrl (string) menjadi pdfFile (File Object)
   const [form, setForm] = useState<{ title: string; author: string; description: string; pdfFile: File | null; coverColor: string }>({ title: '', author: '', description: '', pdfFile: null, coverColor: '#0F354D' });
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const refresh = () => setKitab(KitabStore.getByGuru(user.id));
+  // PERBAIKAN: Menggunakan getByHalaqah
+  const refresh = () => setKitab(halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.author.trim()) { setError('Judul dan pengarang wajib diisi.'); return; }
@@ -240,8 +245,6 @@ function KitabSection({ user }: { user: User }) {
 
     setUploading(true);
     try {
-      // SIMULASI UPLOAD: Membuat URL sementara di browser agar file bisa dibuka.
-      // Nanti bagian ini kita ganti dengan logika fetch POST ke Cloud Storage / Railway.
       const temporaryUrl = URL.createObjectURL(form.pdfFile);
 
       KitabStore.create({ 
@@ -250,7 +253,7 @@ function KitabSection({ user }: { user: User }) {
         description: form.description.trim(), 
         guruId: user.id, 
         halaqahId: halaqah.id, 
-        fileUrl: temporaryUrl, // Menyimpan URL lokal sementara ke database
+        fileUrl: temporaryUrl,
         coverColor: form.coverColor 
       });
       
@@ -321,7 +324,6 @@ function KitabSection({ user }: { user: User }) {
             <textarea className={inputCls} rows={2} placeholder="Deskripsi isi kitab..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
           
-          {/* Kolom Upload File Pengganti URL */}
           <div>
             <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Upload File PDF Kitab</label>
             <input 
@@ -361,13 +363,16 @@ function KitabSection({ user }: { user: User }) {
 function SoalSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const jadwalList = halaqah ? JadwalStore.getByHalaqah(halaqah.id) : [];
-  const [soal, setSoal] = useState(() => SoalStore.getByGuru(user.id));
+  
+  // PERBAIKAN: Menggunakan getByHalaqah
+  const [soal, setSoal] = useState(() => halaqah ? SoalStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
   const [viewSoal, setViewSoal] = useState<Soal | null>(null);
   const [form, setForm] = useState({ title: '', description: '', jadwalId: '', deadline: '', questions: [{ id: genId(), text: '' }] as Question[] });
   const [error, setError] = useState('');
 
-  const refresh = () => setSoal(SoalStore.getByGuru(user.id));
+  // PERBAIKAN: Menggunakan getByHalaqah
+  const refresh = () => setSoal(halaqah ? SoalStore.getByHalaqah(halaqah.id) : []);
 
   const addQuestion = () => setForm(f => ({ ...f, questions: [...f.questions, { id: genId(), text: '' }] }));
   const removeQuestion = (id: string) => setForm(f => ({ ...f, questions: f.questions.filter(q => q.id !== id) }));
