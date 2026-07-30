@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { User } from '../types';
-import { UserStore } from '../../app/store';
+import { UserStore } from '../store';
 import { Lock, Mail, User as UserIcon } from 'lucide-react';
 
 interface LoginPageProps {
@@ -53,26 +53,20 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 bg-[#F7F5EC] overflow-y-auto">
-      {/* Banner / Header Logo & Motif */}
-      <div className="w-full max-w-md bg-[#5A1827] rounded-t-2xl p-6 flex flex-col items-center justify-center text-center shadow-md relative overflow-hidden">
-        <div className="w-20 h-20 mb-3 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center bg-[#0F354D] border-2 border-[#C9A054]">
-          <img src="/img/Logo Al-Fayyadh.jpg" alt="Logo Al-Fayyadh" className="w-full h-full object-cover" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[#F7F5EC] overflow-y-auto">
+      <div className="w-full max-w-md bg-card rounded-2xl shadow-xl border border-border p-8 my-auto">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden shadow-md flex items-center justify-center bg-[#0F354D]">
+            <img src="/img/Logo Al-Fayyadh.jpg" alt="Logo Al-Fayyadh" className="w-full h-full object-cover" />
+          </div>
+          <h1 className="text-2xl font-bold" style={{ fontFamily: "'Amiri', serif", color: '#0F354D' }}>
+            Mudarasah Al-Fayyadh
+          </h1>
+          <p className="text-xs mt-1" style={{ color: '#8B7355' }}>Sistem Informasi Mudarasah Digital</p>
         </div>
-        <h1 className="text-xl font-bold text-[#F7F5EC]" style={{ fontFamily: "'Amiri', serif" }}>
-          Mudarasah Asatidz Al-Fayyadh
-        </h1>
-        <p className="text-xs text-[#C9A054] mt-0.5">Sistem Mudarasah Digital</p>
-      </div>
-
-      {/* Form Card */}
-      <div className="w-full max-w-md bg-card rounded-b-2xl shadow-xl border border-t-0 border-border p-8 bg-white">
-        <h2 className="text-sm font-semibold mb-6 text-center" style={{ color: '#705C3B' }}>
-          {isRegister ? 'Pendaftaran Akun Asatidz' : 'Masuk ke Akun Anda'}
-        </h2>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl text-sm text-center font-medium bg-red-50 text-red-700 border border-red-200">
+          <div className="mb-6 p-3 rounded-xl text-sm text-center font-medium bg-red-50 text-red-700 border border-red-200">
             {error}
           </div>
         )}
