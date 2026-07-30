@@ -45,21 +45,22 @@ export async function initializeStore() {
     await Promise.all([
       fetchAndMap('users', KEYS.users, (u: any) => u),
       
-      // PERBAIKAN: Baca JSON memberIds jadi Array
       fetchAndMap('halaqah', KEYS.halaqah, (h: any) => {
         let parsedMembers = [];
         try { parsedMembers = typeof h.memberIds === 'string' ? JSON.parse(h.memberIds) : (h.memberIds || []); } catch {}
-        return { ...h, name: h.nama, description: h.deskripsi, memberIds: parsedMembers };
+        return { ...h, name: h.nama, description: h.deskripsi, memberIds: parsedMembers, guruId: h.guruId };
       }),
       
-      fetchAndMap('kitab', KEYS.kitab, (k: any) => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl })),
-      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, topic: j.materi })),
+      fetchAndMap('kitab', KEYS.kitab, (k: any) => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl, halaqahId: k.halaqahId, guruId: k.guruId, coverColor: k.coverColor })),
+      
+      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, topic: j.materi, halaqahId: j.halaqahId, guruId: j.guruId, location: j.location })),
+      
       fetchAndMap('absensi', KEYS.absensi, (a: any) => a),
       
       fetchAndMap('soal', KEYS.soal, (s: any) => {
         let parsedQ = [];
         try { parsedQ = typeof s.pertanyaan === 'string' ? JSON.parse(s.pertanyaan) : s.pertanyaan; } catch {}
-        return { ...s, title: s.judul, description: s.deskripsi || '', jadwalId: s.jadwalId || '', deadline: s.deadline || '', questions: parsedQ };
+        return { ...s, title: s.judul, description: s.deskripsi || '', jadwalId: s.jadwalId || '', deadline: s.deadline || '', questions: parsedQ, halaqahId: s.halaqahId, guruId: s.guruId };
       }),
     ]);
   } catch (e) {
@@ -172,7 +173,7 @@ export const HalaqahStore = {
 export const KitabStore = {
   getAll: (): Kitab[] => load<Kitab>(KEYS.kitab, []),
   getByHalaqah: (halaqahId: string): Kitab[] => load<Kitab>(KEYS.kitab, []).filter(k => k.halaqahId === halaqahId),
-  getByGuru: (guruId: string): Kitab[] => load<Kitab>(KEYS.kitab, []).filter(k => k.guruId === guruId),
+  getByGuru: (guruId: string): Kitab[] => load<Kitab>(KEYS.kitab, []).filter(k => (k as any).guruId === guruId),
   
   create(data: Omit<Kitab, 'id' | 'uploadedAt'>): Kitab {
     const list = load<Kitab>(KEYS.kitab, []);
