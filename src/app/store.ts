@@ -29,7 +29,7 @@ export function genId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Terhubung ke Database PostgreSQL via Backend Railway
+// Terhubung ke Database PostgreSQL via Backend Railway (Auth) + Fungsi Lokal Admin
 export const UserStore = {
   async login(email: string, pass: string) {
     try {
@@ -61,6 +61,21 @@ export const UserStore = {
       console.error(err);
       return null;
     }
+  },
+
+  // Fungsi-fungsi lokal pendukung
+  getAll: () => load<User>(KEYS.users, []),
+  getById: (id: string) => load<User>(KEYS.users, []).find(u => u.id === id),
+  
+  // ---> TAMBAHKAN BARIS DI BAWAH INI <---
+  getByEmail: (email: string) => load<User>(KEYS.users, []).find(u => u.email === email),
+
+  getByRole: (role: string) => load<User>(KEYS.users, []).filter(u => u.role === role),
+  update: (id: string, data: Partial<User>) => {
+    save(KEYS.users, load<User>(KEYS.users, []).map(u => u.id === id ? { ...u, ...data } : u));
+  },
+  delete: (id: string) => {
+    save(KEYS.users, load<User>(KEYS.users, []).filter(u => u.id !== id));
   }
 };
 
