@@ -2,15 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 
-// Konfigurasi Prisma Client untuk versi terbaru
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-});
-
+// Inisialisasi Prisma Client standar untuk versi 5 ke bawah
+const prisma = new PrismaClient();
 const app = express();
 
 app.use(cors());
