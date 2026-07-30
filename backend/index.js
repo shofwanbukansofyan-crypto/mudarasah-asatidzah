@@ -2,14 +2,37 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 
-// Inisialisasi Prisma Client standar untuk versi 5 ke bawah
 const prisma = new PrismaClient();
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Endpoint Halaman Utama (Agar tidak muncul "Cannot GET /" di browser)
+// Fungsi untuk menyuntikkan akun Admin permanen
+async function seedAdmin() {
+  try {
+    const adminEmail = 'admin@mudarasah.com';
+    const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+    
+    if (!existingAdmin) {
+      await prisma.user.create({
+        data: { 
+          username: 'Admin Mudarasah', 
+          email: adminEmail, 
+          password: 'admin123', 
+          role: 'admin' 
+        }
+      });
+      console.log('✅ Akun Admin permanen berhasil disuntikkan ke database!');
+    } else {
+      console.log('⚡ Akun Admin sudah tersedia di database.');
+    }
+  } catch (err) {
+    console.error('❌ Gagal menyuntikkan akun Admin:', err);
+  }
+}
+
+// Endpoint Halaman Utama
 app.get('/', (req, res) => {
   res.send('Backend Mudarasah Asatidzah sudah online dan siap melayani API!');
 });
@@ -46,4 +69,9 @@ app.post('/api/register', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend server berjalan di port ${PORT}`));
+
+// Jalankan server sekaligus panggil fungsi pembuat Admin
+app.listen(PORT, async () => {
+  console.log(`Backend server berjalan di port ${PORT}`);
+  await seedAdmin(); 
+});
