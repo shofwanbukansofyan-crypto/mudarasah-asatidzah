@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import type { User } from './types';
-import { UserStore, initStore } from './store';
 import { LoginPage } from './components/LoginPage';
 import { Layout } from './components/Layout';
 
@@ -9,13 +8,12 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    initStore();
     try {
       const saved = localStorage.getItem('mudarasah_current_user');
       if (saved) {
+        // Langsung gunakan data user yang tersimpan di sesi browser
         const parsed = JSON.parse(saved) as User;
-        const fresh = UserStore.getById(parsed.id);
-        if (fresh) setCurrentUser(fresh);
+        setCurrentUser(parsed);
       }
     } catch {
       localStorage.removeItem('mudarasah_current_user');
