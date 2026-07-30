@@ -12,6 +12,79 @@ model User {
   username  String
   email     String   @unique
   password  String
-  role      String   
+  role      String   @default("asatidz") // admin, guru, asatidz
   createdAt DateTime @default(now())
+  
+  // Relasi opsional
+  halaqah   Halaqah[]
+  absensi   Absensi[]
+  submissions SoalSubmission[]
+}
+
+model Halaqah {
+  id        String   @id @default(uuid())
+  nama      String
+  deskripsi String?
+  guruId    String
+  guru      User     @relation(fields: [guruId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  kitab     Kitab[]
+  jadwal    Jadwal[]
+  soal      Soal[]
+}
+
+model Kitab {
+  id         String   @id @default(uuid())
+  judul      String
+  penulis    String?
+  fileUrl    String?
+  halaqahId  String
+  halaqah    Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  uploadedAt DateTime @default(now())
+}
+
+model Jadwal {
+  id        String   @id @default(uuid())
+  hari      String
+  jam       String
+  materi    String
+  halaqahId String
+  halaqah   Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  absensi   Absensi[]
+}
+
+model Absensi {
+  id        String   @id @default(uuid())
+  jadwalId  String
+  jadwal    Jadwal   @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   // hadir, izin, sakit, alpa
+  tanggal   String
+  catatan   String?
+}
+
+model Soal {
+  id        String   @id @default(uuid())
+  judul     String
+  pertanyaan String
+  halaqahId String
+  halaqah   Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  submissions SoalSubmission[]
+}
+
+model SoalSubmission {
+  id        String   @id @default(uuid())
+  soalId    String
+  soal      Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jawaban   String
+  nilai     Int?
+  submittedAt DateTime @default(now())
 }

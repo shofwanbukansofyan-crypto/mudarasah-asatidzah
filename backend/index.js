@@ -32,12 +32,11 @@ async function seedAdmin() {
   }
 }
 
-// Endpoint Halaman Utama
 app.get('/', (req, res) => {
   res.send('Backend Mudarasah Asatidzah sudah online dan siap melayani API!');
 });
 
-// Endpoint Login
+// 1. Endpoint Login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -51,7 +50,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Endpoint Register (Buat Akun)
+// 2. Endpoint Register / Create User
 app.post('/api/register', async (req, res) => {
   const { username, email, password, role } = req.body;
   try {
@@ -68,10 +67,33 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+// 3. Endpoint Ambil Semua User (Pengganti LocalStorage getAll)
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { id: 'desc' }
+    });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-// Jalankan server sekaligus panggil fungsi pembuat Admin
+// 4. Endpoint Hapus User
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.get ? req.params : req.body; // fleksibel
+  try {
+    // Karena id di prisma bisa string/int, kita sesuaikan
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.json({ message: 'User berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 8080;
+
 app.listen(PORT, async () => {
   console.log(`Backend server berjalan di port ${PORT}`);
-  await seedAdmin(); 
+  await seedAdmin();
 });
