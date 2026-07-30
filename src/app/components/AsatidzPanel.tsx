@@ -54,7 +54,11 @@ function NoHalaqahBanner() {
 
 // ---- Beranda ----
 function BerandaSection({ user }: { user: User }) {
-  const halaqah = HalaqahStore.getAll().find(h => h.memberIds && h.memberIds.includes(user.id));
+  const halaqah = HalaqahStore.getAll().find(h => {
+  if (!h.memberIds) return false;
+  const membersStr = JSON.stringify(h.memberIds);
+  return membersStr.includes(user.id) || membersStr.includes(user.email) || membersStr.includes(user.username);
+});
   const jadwalList = halaqah ? JadwalStore.getByHalaqah(halaqah.id) : [];
   const today = new Date().toISOString().split('T')[0];
   const myAbsensi = AbsensiStore.getByUser(user.id);
@@ -128,7 +132,11 @@ function BerandaSection({ user }: { user: User }) {
 
 // ---- Absensi ----
 function AbsensiSection({ user }: { user: User }) {
-  const halaqah = HalaqahStore.getAll().find(h => h.memberIds && h.memberIds.includes(user.id));
+  const halaqah = HalaqahStore.getAll().find(h => {
+  if (!h.memberIds) return false;
+  const membersStr = JSON.stringify(h.memberIds);
+  return membersStr.includes(user.id) || membersStr.includes(user.email) || membersStr.includes(user.username);
+});
   const [jadwalList] = useState(() => halaqah ? JadwalStore.getByHalaqah(halaqah.id).sort((a, b) => b.date.localeCompare(a.date)) : []);
   const [absensi, setAbsensi] = useState(() => AbsensiStore.getByUser(user.id));
   const [modal, setModal] = useState<{ jadwalId: string; topic: string } | null>(null);
@@ -263,7 +271,11 @@ function AbsensiSection({ user }: { user: User }) {
 
 // ---- Kitab ----
 function KitabSection({ user }: { user: User }) {
-  const halaqah = HalaqahStore.getAll().find(h => h.memberIds && h.memberIds.includes(user.id));
+  const halaqah = HalaqahStore.getAll().find(h => {
+  if (!h.memberIds) return false;
+  const membersStr = JSON.stringify(h.memberIds);
+  return membersStr.includes(user.id) || membersStr.includes(user.email) || membersStr.includes(user.username);
+});
   const kitab = halaqah ? KitabStore.getByHalaqah(halaqah.id) : [];
 
   if (!halaqah) return <NoHalaqahBanner />;
@@ -310,7 +322,11 @@ function KitabSection({ user }: { user: User }) {
 
 // ---- Soal Simulasi ----
 function SimulasiSection({ user }: { user: User }) {
-  const halaqah = HalaqahStore.getAll().find(h => h.memberIds && h.memberIds.includes(user.id));
+  const halaqah = HalaqahStore.getAll().find(h => {
+  if (!h.memberIds) return false;
+  const membersStr = JSON.stringify(h.memberIds);
+  return membersStr.includes(user.id) || membersStr.includes(user.email) || membersStr.includes(user.username);
+});
   const soalList = halaqah ? SoalStore.getByHalaqah(halaqah.id) : [];
   const [activeSoal, setActiveSoal] = useState<Soal | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
