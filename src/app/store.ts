@@ -127,7 +127,7 @@ export const HalaqahStore = {
 export const KitabStore = {
   getAll: (): Kitab[] => load<Kitab>(KEYS.kitab, []),
   getByHalaqah: (halaqahId: string): Kitab[] => load<Kitab>(KEYS.kitab, []).filter(k => k.halaqahId === halaqahId),
-  getByGuru: (guruId: string): Kitab[] => [],
+  getByGuru: (guruId: string): Kitab[] => load<Kitab>(KEYS.kitab, []).filter(k => k.guruId === guruId),
   
   create(data: Omit<Kitab, 'id' | 'uploadedAt'>): Kitab {
     const list = load<Kitab>(KEYS.kitab, []);
