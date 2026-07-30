@@ -9,6 +9,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Endpoint Halaman Utama (Agar tidak muncul "Cannot GET /" di browser)
+app.get('/', (req, res) => {
+  res.send('Backend Mudarasah Asatidzah sudah online dan siap melayani API!');
+});
+
 // Endpoint Login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
