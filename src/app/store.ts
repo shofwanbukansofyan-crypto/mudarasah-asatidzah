@@ -29,16 +29,32 @@ export function genId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Inisialisasi background untuk narik data API ke lokal saat web pertama kali dibuka
+// ================= MAPPER: Database (Indo) -> Frontend (Eng) =================
 export async function initializeStore() {
   try {
-    const endpoints = Object.keys(KEYS);
-    for (const ep of endpoints) {
-      const res = await fetch(`${API_URL}/${ep}`);
+    const fetchAndMap = async (endpoint: string, key: string, mapper: (item: any) => any) => {
+      const res = await fetch(`${API_URL}/${endpoint}`);
       if (res.ok) {
-        save(KEYS[ep as keyof typeof KEYS], await res.json());
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          save(key, data.map(mapper));
+        }
       }
-    }
+    };
+
+    // Saat buka web, narik data dari DB Indo, diubah jadi Eng buat Frontend
+    await Promise.all([
+      fetchAndMap('users', KEYS.users, u => u),
+      fetchAndMap('halaqah', KEYS.halaqah, h => ({ ...h, name: h.nama, description: h.deskripsi, memberIds: h.memberIds || [] })),
+      fetchAndMap('kitab', KEYS.kitab, k => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl })),
+      fetchAndMap('jadwal', KEYS.jadwal, j => ({ ...j, date: j.hari, time: j.jam, topic: j.materi })),
+      fetchAndMap('absensi', KEYS.absensi, a => a),
+      fetchAndMap('soal', KEYS.soal, s => {
+        let parsedQ = [];
+        try { parsedQ = typeof s.pertanyaan === 'string' ? JSON.parse(s.pertanyaan) : s.pertanyaan; } catch {}
+        return { ...s, title: s.judul, questions: parsedQ };
+      }),
+    ]);
   } catch (e) {
     console.error('Gagal sinkronisasi dengan Railway:', e);
   }
@@ -89,7 +105,6 @@ export const UserStore = {
   update(id: string, data: Partial<User>) {
     const updated = load<User>(KEYS.users, []).map(u => u.id === id ? { ...u, ...data } : u);
     save(KEYS.users, updated);
-    // Silent API Update jika endpoint tersedia
   },
 
   delete(id: string) {
@@ -109,7 +124,17 @@ export const HalaqahStore = {
     const list = load<Halaqah>(KEYS.halaqah, []);
     const newH: Halaqah = { ...data, id: 'h' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.halaqah, [...list, newH]);
-    fetch(`${API_URL}/halaqah`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newH) }).catch(console.error);
+    
+    // MAPPER POST: Frontend (Eng) -> Database (Indo)
+    fetch(`${API_URL}/halaqah`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({
+        nama: newH.name,
+        deskripsi: (newH as any).description || '',
+        guruId: newH.guruId
+      }) 
+    }).catch(console.error);
     return newH;
   },
   
@@ -133,7 +158,18 @@ export const KitabStore = {
     const list = load<Kitab>(KEYS.kitab, []);
     const newK: Kitab = { ...data, id: 'k' + genId(), uploadedAt: new Date().toISOString().split('T')[0] };
     save(KEYS.kitab, [...list, newK]);
-    fetch(`${API_URL}/kitab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newK) }).catch(console.error);
+    
+    // MAPPER POST: Frontend (Eng) -> Database (Indo)
+    fetch(`${API_URL}/kitab`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({
+        judul: newK.title,
+        penulis: newK.author,
+        fileUrl: newK.fileUrl || '',
+        halaqahId: newK.halaqahId
+      }) 
+    }).catch(console.error);
     return newK;
   },
   
@@ -156,7 +192,18 @@ export const JadwalStore = {
     const list = load<Jadwal>(KEYS.jadwal, []);
     const newJ: Jadwal = { ...data, id: 'j' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.jadwal, [...list, newJ]);
-    fetch(`${API_URL}/jadwal`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newJ) }).catch(console.error);
+    
+    // MAPPER POST: Frontend (Eng) -> Database (Indo)
+    fetch(`${API_URL}/jadwal`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({
+        hari: newJ.date,
+        jam: newJ.time,
+        materi: newJ.topic,
+        halaqahId: newJ.halaqahId
+      }) 
+    }).catch(console.error);
     return newJ;
   },
   
@@ -194,14 +241,24 @@ export const AbsensiStore = {
 export const SoalStore = {
   getAll: (): Soal[] => load<Soal>(KEYS.soal, []),
   getByHalaqah: (halaqahId: string): Soal[] => load<Soal>(KEYS.soal, []).filter(s => s.halaqahId === halaqahId),
-  getByGuru: (guruId: string): Soal[] => [],
+  getByGuru: (guruId: string): Soal[] => load<Soal>(KEYS.soal, []).filter(s => s.guruId === guruId),
   getById: (id: string): Soal | undefined => load<Soal>(KEYS.soal, []).find(s => s.id === id),
   
   create(data: Omit<Soal, 'id' | 'createdAt'>): Soal {
     const list = load<Soal>(KEYS.soal, []);
     const newS: Soal = { ...data, id: 's' + genId(), createdAt: new Date().toISOString().split('T')[0] };
     save(KEYS.soal, [...list, newS]);
-    fetch(`${API_URL}/soal`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newS) }).catch(console.error);
+    
+    // MAPPER POST: Frontend (Eng) -> Database (Indo)
+    fetch(`${API_URL}/soal`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({
+        judul: newS.title,
+        pertanyaan: JSON.stringify(newS.questions),
+        halaqahId: newS.halaqahId
+      }) 
+    }).catch(console.error);
     return newS;
   },
   
