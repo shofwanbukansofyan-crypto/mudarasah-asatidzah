@@ -225,25 +225,49 @@ function KitabSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const [kitab, setKitab] = useState(() => KitabStore.getByGuru(user.id));
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ title: '', author: '', description: '', fileUrl: '', coverColor: '#0F354D' });
+  
+  // Mengubah state fileUrl (string) menjadi pdfFile (File Object)
+  const [form, setForm] = useState<{ title: string; author: string; description: string; pdfFile: File | null; coverColor: string }>({ title: '', author: '', description: '', pdfFile: null, coverColor: '#0F354D' });
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const refresh = () => setKitab(KitabStore.getByGuru(user.id));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim() || !form.author.trim()) { setError('Judul dan pengarang wajib diisi.'); return; }
-    if (!form.fileUrl.trim()) { setError('URL file PDF wajib diisi.'); return; }
+    if (!form.pdfFile) { setError('File PDF wajib dipilih.'); return; }
     if (!halaqah) { setError('Anda belum ditugaskan ke halaqah.'); return; }
-    KitabStore.create({ title: form.title.trim(), author: form.author.trim(), description: form.description.trim(), guruId: user.id, halaqahId: halaqah.id, fileUrl: form.fileUrl.trim(), coverColor: form.coverColor });
-    setModal(false);
-    refresh();
+
+    setUploading(true);
+    try {
+      // SIMULASI UPLOAD: Membuat URL sementara di browser agar file bisa dibuka.
+      // Nanti bagian ini kita ganti dengan logika fetch POST ke Cloud Storage / Railway.
+      const temporaryUrl = URL.createObjectURL(form.pdfFile);
+
+      KitabStore.create({ 
+        title: form.title.trim(), 
+        author: form.author.trim(), 
+        description: form.description.trim(), 
+        guruId: user.id, 
+        halaqahId: halaqah.id, 
+        fileUrl: temporaryUrl, // Menyimpan URL lokal sementara ke database
+        coverColor: form.coverColor 
+      });
+      
+      setModal(false);
+      refresh();
+    } catch (err) {
+      setError('Gagal menyimpan data kitab.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div>
       <PageHeader title="Kelola Kitab" subtitle="Tambahkan kitab PDF untuk diakses asatidz halaqah Anda.">
         {halaqah && (
-          <button onClick={() => { setForm({ title: '', author: '', description: '', fileUrl: '', coverColor: '#0F354D' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
+          <button onClick={() => { setForm({ title: '', author: '', description: '', pdfFile: null, coverColor: '#0F354D' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
             <Plus size={16} className="inline mr-1.5" />Tambah Kitab
           </button>
         )}
@@ -285,23 +309,36 @@ function KitabSection({ user }: { user: User }) {
         {error && <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#991B1B' }}>{error}</p>}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Judul Kitab</label>
+            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Judul Kitab</label>
             <input className={inputCls} placeholder="cth: Riyadhus Shalihin" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Pengarang</label>
+            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Pengarang</label>
             <input className={inputCls} placeholder="cth: Imam An-Nawawi" value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Deskripsi Singkat</label>
+            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Deskripsi Singkat</label>
             <textarea className={inputCls} rows={2} placeholder="Deskripsi isi kitab..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
+          
+          {/* Kolom Upload File Pengganti URL */}
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>URL File PDF</label>
-            <input className={inputCls} placeholder="https://..." value={form.fileUrl} onChange={e => setForm(f => ({ ...f, fileUrl: e.target.value }))} />
+            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Upload File PDF Kitab</label>
+            <input 
+              type="file" 
+              accept="application/pdf"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-input-background text-foreground text-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#0F354D] file:text-white hover:file:bg-[#0F354D]/90 transition"
+              onChange={e => setForm(f => ({ ...f, pdfFile: e.target.files?.[0] || null }))} 
+            />
+            {form.pdfFile && (
+              <p className="text-xs mt-2 font-medium" style={{ color: '#4A9B6F' }}>
+                Terpilih: {form.pdfFile.name}
+              </p>
+            )}
           </div>
+
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Warna Cover</label>
+            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Warna Cover</label>
             <div className="flex gap-2">
               {COVER_COLORS.map(c => (
                 <button key={c} onClick={() => setForm(f => ({ ...f, coverColor: c }))} className="w-7 h-7 rounded-lg border-2 transition" style={{ backgroundColor: c, borderColor: form.coverColor === c ? '#C9A054' : 'transparent' }} />
@@ -309,8 +346,10 @@ function KitabSection({ user }: { user: User }) {
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button onClick={() => setModal(false)} className="flex-1 py-2 rounded-lg border border-border text-sm transition hover:bg-muted" style={{ color: '#705C3B' }}>Batal</button>
-            <button onClick={handleSave} className="flex-1 py-2 rounded-lg text-sm font-medium text-white" style={{ background: '#0F354D' }}>Simpan</button>
+            <button type="button" onClick={() => setModal(false)} className="flex-1 py-2 rounded-lg border border-border text-sm font-medium transition hover:bg-muted" style={{ color: '#705C3B' }}>Batal</button>
+            <button type="button" onClick={handleSave} disabled={uploading} className="flex-1 py-2 rounded-lg text-sm font-medium text-white transition disabled:opacity-50" style={{ background: '#0F354D' }}>
+              {uploading ? 'Memproses...' : 'Simpan'}
+            </button>
           </div>
         </div>
       </Modal>
