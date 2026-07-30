@@ -24,8 +24,6 @@ async function seedAdmin() {
         }
       });
       console.log('✅ Akun Admin permanen berhasil disuntikkan ke database!');
-    } else {
-      console.log('⚡ Akun Admin sudah tersedia di database.');
     }
   } catch (err) {
     console.error('❌ Gagal menyuntikkan akun Admin:', err);
@@ -33,10 +31,10 @@ async function seedAdmin() {
 }
 
 app.get('/', (req, res) => {
-  res.send('Backend Mudarasah Asatidzah sudah online dan siap melayani API!');
+  res.send('Backend Full-Stack Mudarasah Asatidzah aktif!');
 });
 
-// 1. Endpoint Login
+// ================= USERS & AUTH =================
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -50,7 +48,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// 2. Endpoint Register / Create User
 app.post('/api/register', async (req, res) => {
   const { username, email, password, role } = req.body;
   try {
@@ -67,25 +64,168 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// 3. Endpoint Ambil Semua User (Pengganti LocalStorage getAll)
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
-      orderBy: { id: 'desc' }
-    });
+    const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 4. Endpoint Hapus User
 app.delete('/api/users/:id', async (req, res) => {
-  const { id } = req.get ? req.params : req.body; // fleksibel
   try {
-    // Karena id di prisma bisa string/int, kita sesuaikan
     await prisma.user.delete({ where: { id: req.params.id } });
     res.json({ message: 'User berhasil dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= HALAQAH =================
+app.get('/api/halaqah', async (req, res) => {
+  try {
+    const data = await prisma.halaqah.findMany({ include: { guru: true } });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/halaqah', async (req, res) => {
+  try {
+    const newItem = await prisma.halaqah.create({ data: req.body });
+    res.json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/halaqah/:id', async (req, res) => {
+  try {
+    await prisma.halaqah.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Halaqah dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= KITAB =================
+app.get('/api/kitab', async (req, res) => {
+  try {
+    const data = await prisma.kitab.findMany();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/kitab', async (req, res) => {
+  try {
+    const newItem = await prisma.kitab.create({ data: req.body });
+    res.json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/kitab/:id', async (req, res) => {
+  try {
+    await prisma.kitab.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Kitab dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= JADWAL =================
+app.get('/api/jadwal', async (req, res) => {
+  try {
+    const data = await prisma.jadwal.findMany();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/jadwal', async (req, res) => {
+  try {
+    const newItem = await prisma.jadwal.create({ data: req.body });
+    res.json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/jadwal/:id', async (req, res) => {
+  try {
+    await prisma.jadwal.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Jadwal dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= ABSENSI =================
+app.get('/api/absensi', async (req, res) => {
+  try {
+    const data = await prisma.absensi.findMany();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/absensi', async (req, res) => {
+  try {
+    const newItem = await prisma.absensi.create({ data: req.body });
+    res.json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= SOAL & SUBMISSIONS =================
+app.get('/api/soal', async (req, res) => {
+  try {
+    const data = await prisma.soal.findMany();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/soal', async (req, res) => {
+  try {
+    const newItem = await prisma.soal.create({ data: req.body });
+    res.json(newItem);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/soal/:id', async (req, res) => {
+  try {
+    await prisma.soal.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Soal dihapus' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/submissions', async (req, res) => {
+  try {
+    const data = await prisma.soalSubmission.findMany();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/submissions', async (req, res) => {
+  try {
+    const newItem = await prisma.soalSubmission.create({ data: req.body });
+    res.json(newItem);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
