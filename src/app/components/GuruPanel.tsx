@@ -114,7 +114,7 @@ function JadwalSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const [jadwal, setJadwal] = useState(() => halaqah ? JadwalStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ date: '', time: '08:00', topic: '', location: '' });
+  const [form, setForm] = useState({ date: '', time: '08:00', endTime: '10:00', topic: '', location: '' });
   const [error, setError] = useState('');
 
   const refresh = () => setJadwal(halaqah ? JadwalStore.getByHalaqah(halaqah.id) : []);
@@ -140,7 +140,7 @@ function JadwalSection({ user }: { user: User }) {
     <div>
       <PageHeader title="Jadwal Mudarasah" subtitle="Atur jadwal mudarasah untuk halaqah Anda.">
         {halaqah && (
-          <button onClick={() => { setForm({ date: '', time: '08:00', topic: '', location: '' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
+          <button onClick={() => { setForm({ date: '', time: '08:00', endTime: '10:00', topic: '', location: '' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
             <Plus size={16} className="inline mr-1.5" />Buat Jadwal
           </button>
         )}
@@ -193,16 +193,21 @@ function JadwalSection({ user }: { user: User }) {
       <Modal open={modal} title="Buat Jadwal Mudarasah" onClose={() => setModal(false)}>
         {error && <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#991B1B' }}>{error}</p>}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Tanggal</label>
-              <input type="date" className={inputCls} value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
-            </div>
-            <div>
-              <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Waktu</label>
-              <input type="time" className={inputCls} value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
-            </div>
-          </div>
+          {/* GANTI BAGIAN INPUT TANGGAL & WAKTU JADI INI: */}
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <div>
+    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Tanggal</label>
+    <input type="date" className={inputCls} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+  </div>
+  <div>
+    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Mulai</label>
+    <input type="time" className={inputCls} value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} />
+  </div>
+  <div>
+    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Selesai</label>
+    <input type="time" className={inputCls} value={form.endTime || ''} onChange={e => setForm({ ...form, endTime: e.target.value })} />
+  </div>
+</div>
           <div>
             <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Topik / Materi</label>
             <input className={inputCls} placeholder="cth: Tafsir Surah Al-Mulk Ayat 1-10" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} />

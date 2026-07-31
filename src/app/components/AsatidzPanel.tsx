@@ -167,12 +167,20 @@ function AbsensiSection({ user }: { user: User }) {
       <PageHeader title="Absensi Mudarasah" subtitle="Tandai kehadiran Anda sesuai jadwal yang telah ditentukan." />
 
       <div className="space-y-3">
-        {jadwalList.map(j => {
-          const absen = getAbsen(j.id);
-          const isToday = j.date === today;
-          const isPast = j.date < today;
-          const isFuture = j.date > today;
-          const canAbsen = isToday && !absen;
+       {jadwalList.map(j => {
+  const absen = getAbsen(j.id);
+  const isToday = j.date === today;
+  const isPast = j.date < today;
+  const isFuture = j.date > today;
+  
+  // LOGIKA WAKTU ABSEN KETAT
+  const now = new Date();
+  const currentHour = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+  
+  // Asatidz cuma bisa absen JIKA: hari ini + belum absen + jam sekarang ada di antara jam mulai dan jam selesai
+  const isWithinTime = j.endTime ? (currentHour >= j.time && currentHour <= j.endTime) : currentHour >= j.time;
+  const canAbsen = isToday && !absen && isWithinTime;
+  const isMissed = isToday && !absen && j.endTime && currentHour > j.endTime; // Waktu absen sudah lewat
 
           return (
             <div key={j.id} className="bg-card rounded-xl border shadow-sm p-4" style={{ borderColor: isToday ? '#C9A054' : '#D4C9B0' }}>
@@ -191,7 +199,10 @@ function AbsensiSection({ user }: { user: User }) {
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div>
                       <p className="font-medium text-sm" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{formatDate(j.date)} · {j.time} WIB</p>
+                      {/* INI BIAR RENTANG JAMNYA NAMPIL (Contoh: 08:00 - 10:00 WIB) */}
+                      <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>
+                        {formatDate(j.date)} · {j.time} {j.endTime ? `- ${j.endTime}` : ''} WIB
+                      </p>
                       {j.location && <p className="text-xs" style={{ color: '#8B7355' }}>📍 {j.location}</p>}
                     </div>
                     <div className="flex items-center gap-2">
@@ -214,6 +225,9 @@ function AbsensiSection({ user }: { user: User }) {
                         >
                           <CalendarCheck size={12} className="inline mr-1" />Absen Sekarang
                         </button>
+                      ) : isMissed || isPast ? (
+                         // INI KALAU WAKTUNYA UDAH LEWAT
+                        <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#FEE2E2', color: '#991B1B' }}>Waktu Habis / Alpha</span>
                       ) : (
                         <span className="text-xs px-2.5 py-1 rounded-full" style={{ background: '#FEE2E2', color: '#991B1B' }}>Tidak Absen</span>
                       )}
