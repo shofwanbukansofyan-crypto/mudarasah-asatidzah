@@ -16,76 +16,88 @@ model User {
   createdAt DateTime @default(now())
   
   // Relasi opsional
-  halaqah   Halaqah[]
-  absensi   Absensi[]
+  halaqah     Halaqah[]
+  absensi     Absensi[]
   submissions SoalSubmission[]
 }
 
 model Halaqah {
-  id          String   @id @default(uuid())
-  nama        String
-  deskripsi   String?
-  guruId      String
-  guru        User     @relation(fields: [guruId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  nama      String
+  deskripsi String?
+  guruId    String
+  guru      User     @relation(fields: [guruId], references: [id], onDelete: Cascade)
   
   // TAMBAHAN: Laci buat nyimpen daftar asatidz (format JSON String)
-  memberIds   String?  
+  memberIds String?  
   
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   kitab       Kitab[]
   jadwal      Jadwal[]
   soal        Soal[]
+  absensi     Absensi[]
+  submissions SoalSubmission[]
 }
 
 model Kitab {
   id         String   @id @default(uuid())
   judul      String
   penulis    String?
+  deskripsi  String?  // <-- Ini sempet hilang, gue balikin
   fileUrl    String?
+  coverColor String?  // <-- Ini juga sempet hilang
+  guruId     String
   halaqahId  String
   halaqah    Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
   uploadedAt DateTime @default(now())
 }
 
 model Jadwal {
-  id        String   @id @default(uuid())
-  hari      String
-  jam       String
+  id         String   @id @default(uuid())
+  hari       String
+  jam        String
   jamSelesai String?
-  materi    String
-  lokasi    String?  
-  halaqahId String 
-  halaqah   Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  materi     String
+  lokasi     String?  
+  guruId     String
+  halaqahId  String 
+  halaqah    Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
-  absensi   Absensi[]
+  absensi    Absensi[]
 }
 
 model Absensi {
-  id        String   @id @default(uuid())
-  jadwalId  String
-  jadwal    Jadwal   @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status    String   // hadir, izin, sakit, alpa
-  tanggal   String
-  catatan   String?
+  id         String   @id @default(uuid())
+  jadwalId   String
+  jadwal     Jadwal   @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     String   // hadir, izin, sakit, alpa
+  
+  // Bikin ini opsional pakai '?' biar absen nggak error karena frontend nggak ngirim ini
+  halaqahId  String?
+  halaqah    Halaqah? @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  guruId     String?
+  tanggal    String?
+  
+  catatan    String?
   keterangan String?
   timestamp  String?
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 }
 
 model Soal {
-  id          String   @id @default(uuid())
-  judul       String
-  deskripsi   String?  // <-- Laci baru buat nyimpen deskripsi
-  jadwalId    String?  // <-- Laci baru buat nyimpen jadwal
-  deadline    String?  // <-- Laci baru buat nyimpen deadline
-  pertanyaan  String
-  halaqahId   String
-  halaqah     Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  judul      String
+  deskripsi  String?  
+  jadwalId   String?  
+  deadline   String?  
+  pertanyaan String
+  halaqahId  String
+  halaqah    Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   submissions SoalSubmission[]
 }
@@ -96,6 +108,12 @@ model SoalSubmission {
   soal        Soal     @relation(fields: [soalId], references: [id], onDelete: Cascade)
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Bikin ini opsional pakai '?' juga
+  halaqahId   String?
+  halaqah     Halaqah? @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
+  guruId      String?
+  
   jawaban     String
   nilai       Int?
   submittedAt DateTime @default(now())
