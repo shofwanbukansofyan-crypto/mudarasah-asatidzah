@@ -170,7 +170,7 @@ function JadwalSection({ user }: { user: User }) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-sm" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{j.time} WIB · {j.location || 'Lokasi tidak disebutkan'}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{j.time} wita · {j.location || 'Lokasi tidak disebutkan'}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isToday && <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: '#0F354D', color: '#C9A054' }}>Hari Ini</span>}
