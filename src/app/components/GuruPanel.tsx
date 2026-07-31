@@ -122,7 +122,7 @@ function JadwalSection({ user }: { user: User }) {
   const handleSave = () => {
     if (!form.date || !form.topic.trim()) { setError('Tanggal dan topik wajib diisi.'); return; }
     if (!halaqah) return;
-    JadwalStore.create({ halaqahId: halaqah.id, guruId: user.id, date: form.date, time: form.time, topic: form.topic.trim(), location: form.location.trim() });
+    JadwalStore.create({ halaqahId: halaqah.id, guruId: user.id, date: form.date, time: form.time, endTime: form.endTime, topic: form.topic.trim(), location: form.location.trim() });
     setModal(false);
     refresh();
   };

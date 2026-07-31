@@ -53,7 +53,7 @@ export async function initializeStore() {
       
       fetchAndMap('kitab', KEYS.kitab, (k: any) => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl, halaqahId: k.halaqahId, guruId: k.guruId, coverColor: k.coverColor })),
       
-      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, endTime: j.jamSelesai || '', topic: j.materi, halaqahId: j.halaqahId, guruId: j.guruId, location: j.location })),
+      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, endTime: j.jamSelesai || '', topic: j.materi, halaqahId: j.halaqahId, guruId: j.guruId, location: j.lokasi || '' })),
       
       fetchAndMap('absensi', KEYS.absensi, (a: any) => a),
       

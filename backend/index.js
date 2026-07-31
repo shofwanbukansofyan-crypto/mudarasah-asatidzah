@@ -140,11 +140,13 @@ app.get('/api/kitab', async (req, res) => {
 
 app.post('/api/kitab', async (req, res) => {
   try {
-    const newItem = await prisma.kitab.create({ data: req.body });
-    res.json(newItem);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    // Tambahkan deskripsi, fileUrl, coverColor, dan guruId di sini
+    const { judul, penulis, deskripsi, fileUrl, coverColor, guruId, halaqahId } = req.body;
+    const kitab = await prisma.kitab.create({
+      data: { judul, penulis, deskripsi, fileUrl, coverColor, guruId, halaqahId }
+    });
+    res.json(kitab);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 app.delete('/api/kitab/:id', async (req, res) => {
@@ -168,11 +170,13 @@ app.get('/api/jadwal', async (req, res) => {
 
 app.post('/api/jadwal', async (req, res) => {
   try {
-    const newItem = await prisma.jadwal.create({ data: req.body });
-    res.json(newItem);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    // Tambahkan jamSelesai, lokasi, dan guruId di sini
+    const { hari, jam, jamSelesai, materi, lokasi, guruId, halaqahId } = req.body;
+    const jadwal = await prisma.jadwal.create({
+      data: { hari, jam, jamSelesai, materi, lokasi, guruId, halaqahId }
+    });
+    res.json(jadwal);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 app.delete('/api/jadwal/:id', async (req, res) => {
@@ -196,11 +200,13 @@ app.get('/api/absensi', async (req, res) => {
 
 app.post('/api/absensi', async (req, res) => {
   try {
-    const newItem = await prisma.absensi.create({ data: req.body });
-    res.json(newItem);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    // Tambahkan timestamp dan keterangan di sini
+    const { jadwalId, userId, status, keterangan, timestamp } = req.body;
+    const absen = await prisma.absensi.create({
+      data: { jadwalId, userId, status, keterangan, timestamp }
+    });
+    res.json(absen);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 // ================= SOAL & SUBMISSIONS =================
@@ -215,11 +221,13 @@ app.get('/api/soal', async (req, res) => {
 
 app.post('/api/soal', async (req, res) => {
   try {
-    const newItem = await prisma.soal.create({ data: req.body });
-    res.json(newItem);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    // Tambahkan deskripsi, jadwalId, dan deadline di sini
+    const { judul, deskripsi, jadwalId, deadline, pertanyaan, halaqahId } = req.body;
+    const soal = await prisma.soal.create({
+      data: { judul, deskripsi, jadwalId, deadline, pertanyaan, halaqahId }
+    });
+    res.json(soal);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 app.delete('/api/soal/:id', async (req, res) => {
@@ -242,11 +250,12 @@ app.get('/api/submissions', async (req, res) => {
 
 app.post('/api/submissions', async (req, res) => {
   try {
-    const newItem = await prisma.soalSubmission.create({ data: req.body });
-    res.json(newItem);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    const { soalId, userId, jawaban, nilai } = req.body;
+    const submission = await prisma.soalSubmission.create({
+      data: { soalId, userId, jawaban, nilai }
+    });
+    res.json(submission);
+  } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 const PORT = process.env.PORT || 8080;
