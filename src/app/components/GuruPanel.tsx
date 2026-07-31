@@ -231,7 +231,13 @@ function KitabSection({ user }: { user: User }) {
   const [kitab, setKitab] = useState(() => halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
   
-  const [form, setForm] = useState<{ title: string; author: string; description: string; pdfFile: File | null; coverColor: string }>({ title: '', author: '', description: '', pdfFile: null, coverColor: '#0F354D' });
+  const [form, setForm] = useState({ 
+  title: '', 
+  author: '', 
+  description: '', 
+  fileUrl: '', // <-- Sudah diganti jadi URL text
+  coverColor: '#6B21A8' 
+});
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -239,21 +245,21 @@ function KitabSection({ user }: { user: User }) {
   const refresh = () => setKitab(halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
 
   const handleSave = async () => {
+    // 1. Cek validasi form
     if (!form.title.trim() || !form.author.trim()) { setError('Judul dan pengarang wajib diisi.'); return; }
-    if (!form.pdfFile) { setError('File PDF wajib dipilih.'); return; }
+    if (!form.fileUrl.trim()) { setError('Link URL Kitab (GDrive) wajib diisi.'); return; } // <-- Ganti pengecekan pdfFile jadi fileUrl
     if (!halaqah) { setError('Anda belum ditugaskan ke halaqah.'); return; }
 
     setUploading(true);
     try {
-      const temporaryUrl = URL.createObjectURL(form.pdfFile);
-
+      // 2. Langsung kirim link GDrive-nya ke database, nggak usah pake temporary URL lagi
       KitabStore.create({ 
         title: form.title.trim(), 
         author: form.author.trim(), 
         description: form.description.trim(), 
         guruId: user.id, 
         halaqahId: halaqah.id, 
-        fileUrl: temporaryUrl,
+        fileUrl: form.fileUrl.trim(), // <-- Langsung pake fileUrl dari form
         coverColor: form.coverColor 
       });
       
@@ -270,7 +276,7 @@ function KitabSection({ user }: { user: User }) {
     <div>
       <PageHeader title="Kelola Kitab" subtitle="Tambahkan kitab PDF untuk diakses asatidz halaqah Anda.">
         {halaqah && (
-          <button onClick={() => { setForm({ title: '', author: '', description: '', pdfFile: null, coverColor: '#0F354D' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
+          <button onClick={() => { setForm({ title: '', author: '', description: '', fileUrl: '', coverColor: '#0F354D' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
             <Plus size={16} className="inline mr-1.5" />Tambah Kitab
           </button>
         )}
@@ -324,20 +330,17 @@ function KitabSection({ user }: { user: User }) {
             <textarea className={inputCls} rows={2} placeholder="Deskripsi isi kitab..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
           
-          <div>
-            <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Upload File PDF Kitab</label>
-            <input 
-              type="file" 
-              accept="application/pdf"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-input-background text-foreground text-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#0F354D] file:text-white hover:file:bg-[#0F354D]/90 transition"
-              onChange={e => setForm(f => ({ ...f, pdfFile: e.target.files?.[0] || null }))} 
-            />
-            {form.pdfFile && (
-              <p className="text-xs mt-2 font-medium" style={{ color: '#4A9B6F' }}>
-                Terpilih: {form.pdfFile.name}
-              </p>
-            )}
-          </div>
+          {/* GANTI BAGIAN UPLOAD FILE JADI INI: */}
+<div>
+  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Link GDrive Kitab / Materi</label>
+  <input 
+    type="url" 
+    className={inputCls} 
+    placeholder="cth: https://drive.google.com/file/d/..." 
+    value={form.fileUrl} 
+    onChange={e => setForm({ ...form, fileUrl: e.target.value })} 
+  />
+</div>
 
           <div>
             <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Warna Cover</label>

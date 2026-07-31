@@ -52,8 +52,10 @@ model Jadwal {
   id        String   @id @default(uuid())
   hari      String
   jam       String
+  jamSelesai String?
   materi    String
-  halaqahId String
+  lokasi    String?  
+  halaqahId String 
   halaqah   Halaqah  @relation(fields: [halaqahId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
@@ -69,6 +71,9 @@ model Absensi {
   status    String   // hadir, izin, sakit, alpa
   tanggal   String
   catatan   String?
+  keterangan String?
+  timestamp  String?
+  createdAt DateTime @default(now())
 }
 
 model Soal {

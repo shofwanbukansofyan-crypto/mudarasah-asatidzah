@@ -53,7 +53,7 @@ export async function initializeStore() {
       
       fetchAndMap('kitab', KEYS.kitab, (k: any) => ({ ...k, title: k.judul, author: k.penulis, fileUrl: k.fileUrl, halaqahId: k.halaqahId, guruId: k.guruId, coverColor: k.coverColor })),
       
-      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, topic: j.materi, halaqahId: j.halaqahId, guruId: j.guruId, location: j.location })),
+      fetchAndMap('jadwal', KEYS.jadwal, (j: any) => ({ ...j, date: j.hari, time: j.jam, endTime: j.jamSelesai || '', topic: j.materi, halaqahId: j.halaqahId, guruId: j.guruId, location: j.location })),
       
       fetchAndMap('absensi', KEYS.absensi, (a: any) => a),
       
@@ -62,6 +62,13 @@ export async function initializeStore() {
         try { parsedQ = typeof s.pertanyaan === 'string' ? JSON.parse(s.pertanyaan) : s.pertanyaan; } catch {}
         return { ...s, title: s.judul, description: s.deskripsi || '', jadwalId: s.jadwalId || '', deadline: s.deadline || '', questions: parsedQ, halaqahId: s.halaqahId, guruId: s.guruId };
       }),
+
+      fetchAndMap('submissions', KEYS.submissions, (s: any) => {
+  let parsed = [];
+  try { parsed = typeof s.jawaban === 'string' ? JSON.parse(s.jawaban) : s.jawaban; } catch {}
+  return { ...s, answers: parsed || [] };
+}),
+
     ]);
   } catch (e) {
     console.error('Gagal sinkronisasi dengan Railway:', e);
@@ -187,6 +194,9 @@ export const KitabStore = {
         judul: newK.title,
         penulis: newK.author,
         fileUrl: newK.fileUrl || '',
+        coverColor: newK.coverColor || '',
+        guruId: newK.guruId,
+        deskripsi: (newK as any).description || '',
         halaqahId: newK.halaqahId
       }) 
     }).catch(console.error);
@@ -219,7 +229,10 @@ export const JadwalStore = {
       body: JSON.stringify({
         hari: newJ.date,
         jam: newJ.time,
+        jamSelesai: newJ.endTime || '',
         materi: newJ.topic,
+        guruId: newJ.guruId,
+        lokasi: newJ.location || '',
         halaqahId: newJ.halaqahId
       }) 
     }).catch(console.error);
@@ -299,7 +312,15 @@ export const SubmissionStore = {
     const list = load<SoalSubmission>(KEYS.submissions, []);
     const newSub: SoalSubmission = { ...data, id: 'sub' + genId() };
     save(KEYS.submissions, [...list, newSub]);
-    fetch(`${API_URL}/submissions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newSub) }).catch(console.error);
+    fetch(`${API_URL}/submissions`, { 
+  method: 'POST', 
+  headers: { 'Content-Type': 'application/json' }, 
+  body: JSON.stringify({
+    soalId: newSub.soalId,
+    userId: newSub.userId,
+    jawaban: JSON.stringify(newSub.answers) // <-- Ubah array jadi string JSON buat backend
+  }) 
+}).catch(console.error);
     return newSub;
   }
 };

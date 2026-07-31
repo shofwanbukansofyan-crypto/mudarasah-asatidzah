@@ -36,6 +36,7 @@ export interface Jadwal {
   halaqahId: string;
   guruId: string;
   date: string;
+  endTime?: string;
   time: string;
   topic: string;
   location?: string;
