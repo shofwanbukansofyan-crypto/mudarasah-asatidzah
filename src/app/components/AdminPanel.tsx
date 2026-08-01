@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type { User, Halaqah } from '../types';
 import type { UserRole } from '../types';
 import { UserStore, HalaqahStore, KitabStore, JadwalStore, SoalStore } from '../store';
-import { Users, BookOpen, Calendar, LayoutDashboard, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Users, BookOpen, Calendar, LayoutDashboard, Plus, Pencil, Trash2, X, Eye, EyeOff } from 'lucide-react';
 
 type AdminTab = 'dashboard' | 'halaqah' | 'akun';
 
@@ -276,6 +276,7 @@ function AkunSection() {
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'asatidz' as UserRole });
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const refresh = () => setUsers(UserStore.getAll());
 
@@ -383,9 +384,14 @@ function AkunSection() {
             <input type="email" className={inputCls} placeholder="email@contoh.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>{modal === 'edit' ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}</label>
-            <input type="password" className={inputCls} placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-          </div>
+  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>{modal === 'edit' ? 'Password Baru (kosongkan jika tidak diubah)' : 'Password'}</label>
+  <div className="relative">
+    <input type={showPassword ? "text" : "password"} className={`${inputCls} pr-10`} placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+</div>
           <div>
             <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Level Akses</label>
             <select className={inputCls} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))}>

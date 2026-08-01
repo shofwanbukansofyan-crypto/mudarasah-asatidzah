@@ -170,7 +170,7 @@ function JadwalSection({ user }: { user: User }) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-sm" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{j.time} wita · {j.location || 'Lokasi tidak disebutkan'}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{j.time} WITA · {j.location || 'Lokasi tidak disebutkan'}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isToday && <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: '#0F354D', color: '#C9A054' }}>Hari Ini</span>}
@@ -512,18 +512,42 @@ function RekapAbsensiSection({ user }: { user: User }) {
   const memberIds = halaqah?.memberIds || [];
   const allUsers = UserStore.getAll();
   const members = allUsers.filter(u => memberIds.includes(u.id));
-  const allAbsensi = AbsensiStore.getAll();
+  
+  // State untuk nyimpen data absensi biar bisa me-render ulang pas diedit
+  const [allAbsensi, setAllAbsensi] = useState(() => AbsensiStore.getAll());
+  // State untuk modal edit absen
+  const [editModal, setEditModal] = useState<{userId: string, jadwalId: string, currentStatus: string | null} | null>(null);
+
+  const refreshAbsensi = () => setAllAbsensi(AbsensiStore.getAll());
 
   const getStatus = (userId: string, jadwalId: string) => {
     const a = allAbsensi.find(a => a.userId === userId && a.jadwalId === jadwalId);
     return a?.status || null;
   };
 
+  const handleUpdateStatus = (newStatus: string) => {
+    if (!editModal) return;
+    const existing = allAbsensi.find(a => a.userId === editModal.userId && a.jadwalId === editModal.jadwalId);
+    if (existing) {
+      AbsensiStore.update(existing.id, { status: newStatus as any });
+    } else {
+      AbsensiStore.create({
+        jadwalId: editModal.jadwalId,
+        userId: editModal.userId,
+        status: newStatus as any,
+        keterangan: 'Diedit oleh Guru',
+        timestamp: new Date().toISOString()
+      });
+    }
+    setEditModal(null);
+    refreshAbsensi();
+  };
+
   const StatusBadge = ({ status }: { status: string | null }) => {
-    if (status === 'hadir') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium" style={{ background: '#D1FAE5', color: '#065F46' }}>Hadir</span>;
-    if (status === 'izin') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium" style={{ background: '#FEF3C7', color: '#92400E' }}>Izin</span>;
-    if (status === 'alpha') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium" style={{ background: '#FEE2E2', color: '#991B1B' }}>Alpha</span>;
-    return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full" style={{ background: '#F3F4F6', color: '#9CA3AF' }}>—</span>;
+    if (status === 'hadir') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium shadow-sm transition hover:scale-105 cursor-pointer" style={{ background: '#D1FAE5', color: '#065F46' }}>Hadir</span>;
+    if (status === 'izin') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium shadow-sm transition hover:scale-105 cursor-pointer" style={{ background: '#FEF3C7', color: '#92400E' }}>Izin</span>;
+    if (status === 'alpha') return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full font-medium shadow-sm transition hover:scale-105 cursor-pointer" style={{ background: '#FEE2E2', color: '#991B1B' }}>Alpha</span>;
+    return <span className="inline-block w-16 text-center text-xs py-0.5 rounded-full shadow-sm transition hover:scale-105 cursor-pointer hover:bg-gray-200 border" style={{ background: '#F3F4F6', color: '#9CA3AF' }}>—</span>;
   };
 
   if (!halaqah) return (
@@ -541,7 +565,7 @@ function RekapAbsensiSection({ user }: { user: User }) {
 
   return (
     <div>
-      <PageHeader title="Rekap Absensi" subtitle={`Rekapitulasi kehadiran asatidz ${halaqah.name}`} />
+      <PageHeader title="Rekap Absensi" subtitle={`Klik pada status kehadiran untuk mengedit absensi asatidz.`} />
 
       {jadwalList.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-10 text-center shadow-sm">
@@ -551,7 +575,7 @@ function RekapAbsensiSection({ user }: { user: User }) {
       ) : (
         <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="text-xs">
+            <table className="text-xs w-full">
               <thead>
                 <tr style={{ backgroundColor: '#0F354D' }}>
                   <th className="px-4 py-3 text-left sticky left-0 z-10 min-w-36" style={{ color: '#E3DAC9', backgroundColor: '#0F354D' }}>Nama Asatidz</th>
@@ -574,7 +598,9 @@ function RekapAbsensiSection({ user }: { user: User }) {
                         {m.username}
                       </td>
                       {jadwalList.map(j => (
-                        <td key={j.id} className="px-2 py-2.5 text-center"><StatusBadge status={getStatus(m.id, j.id)} /></td>
+                        <td key={j.id} className="px-2 py-2.5 text-center" onClick={() => setEditModal({userId: m.id, jadwalId: j.id, currentStatus: getStatus(m.id, j.id)})}>
+                          <StatusBadge status={getStatus(m.id, j.id)} />
+                        </td>
                       ))}
                       <td className="px-3 py-2.5 text-center font-semibold" style={{ color: '#065F46' }}>{hadir}</td>
                       <td className="px-3 py-2.5 text-center font-semibold" style={{ color: '#92400E' }}>{izin}</td>
@@ -590,6 +616,18 @@ function RekapAbsensiSection({ user }: { user: User }) {
           </div>
         </div>
       )}
+
+      {/* Modal Edit Absen */}
+      <Modal open={!!editModal} title="Edit Kehadiran Asatidz" onClose={() => setEditModal(null)}>
+        <div className="space-y-3">
+          <p className="text-sm mb-4" style={{ color: '#705C3B' }}>Pilih status kehadiran baru untuk asatidz ini:</p>
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => handleUpdateStatus('hadir')} className="py-2.5 rounded-lg font-medium transition hover:brightness-95" style={{ background: '#D1FAE5', color: '#065F46' }}>Hadir</button>
+            <button onClick={() => handleUpdateStatus('izin')} className="py-2.5 rounded-lg font-medium transition hover:brightness-95" style={{ background: '#FEF3C7', color: '#92400E' }}>Izin</button>
+            <button onClick={() => handleUpdateStatus('alpha')} className="py-2.5 rounded-lg font-medium transition hover:brightness-95" style={{ background: '#FEE2E2', color: '#991B1B' }}>Alpha</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

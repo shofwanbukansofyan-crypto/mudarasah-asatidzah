@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { User } from '../types';
 import { UserStore } from '../store';
+import { Eye, EyeOff } from 'lucide-react';
 import { IslamicPattern } from './IslamicPattern';
 
 interface LoginPageProps {
@@ -12,6 +13,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [form, setForm] = useState({ email: '', password: '', username: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+const [showConfirm, setShowConfirm] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -116,9 +119,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   <input type="email" placeholder="email@contoh.com" className={inputCls} value={form.email} onChange={set('email')} />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
-                  <input type="password" placeholder="••••••••" className={inputCls} value={form.password} onChange={set('password')} />
-                </div>
+  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
+  <div className="relative">
+    <input type={showPassword ? "text" : "password"} placeholder="••••••••" className={`${inputCls} pr-10`} value={form.password} onChange={set('password')} />
+    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+</div>
                 <button
                   type="submit"
                   disabled={loading}
@@ -139,13 +147,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   <input type="email" placeholder="email@contoh.com" className={inputCls} value={form.email} onChange={set('email')} />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
-                  <input type="password" placeholder="Min. 6 karakter" className={inputCls} value={form.password} onChange={set('password')} />
-                </div>
+  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
+  <div className="relative">
+    <input type={showPassword ? "text" : "password"} placeholder="••••••••" className={`${inputCls} pr-10`} value={form.password} onChange={set('password')} />
+    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+</div>
                 <div>
-                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Konfirmasi Password</label>
-                  <input type="password" placeholder="Ulangi password" className={inputCls} value={form.confirmPassword} onChange={set('confirmPassword')} />
-                </div>
+  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
+  <div className="relative">
+    <input type={showPassword ? "text" : "password"} placeholder="••••••••" className={`${inputCls} pr-10`} value={form.password} onChange={set('password')} />
+    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+</div>
                 <button
                   type="submit"
                   disabled={loading}
