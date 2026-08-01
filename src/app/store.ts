@@ -239,8 +239,24 @@ export const JadwalStore = {
     return newJ;
   },
   
-  update(id: string, data: Partial<Jadwal>) {
-    save(KEYS.jadwal, load<Jadwal>(KEYS.jadwal, []).map(j => j.id === id ? { ...j, ...data } : j));
+ update(id: string, data: Partial<Jadwal>) {
+    const list = load<Jadwal>(KEYS.jadwal, []);
+    const updatedJadwal = { ...list.find(j => j.id === id), ...data } as Jadwal;
+    save(KEYS.jadwal, load<Jadwal>(KEYS.jadwal, []).map(j => j.id === id ? updatedJadwal : j));
+    
+    fetch(`${API_URL}/jadwal/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hari: updatedJadwal.date,
+        jam: updatedJadwal.time,
+        jamSelesai: updatedJadwal.endTime || '',
+        materi: updatedJadwal.topic,
+        lokasi: updatedJadwal.location || '',
+        guruId: updatedJadwal.guruId,
+        halaqahId: updatedJadwal.halaqahId
+      })
+    }).catch(console.error);
   },
   
   delete(id: string) {

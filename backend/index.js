@@ -179,6 +179,19 @@ app.post('/api/jadwal', async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+app.put('/api/jadwal/:id', async (req, res) => {
+  try {
+    const { hari, jam, jamSelesai, materi, lokasi, guruId, halaqahId } = req.body;
+    const updated = await prisma.jadwal.update({
+      where: { id: req.params.id },
+      data: { hari, jam, jamSelesai, materi, lokasi, guruId, halaqahId }
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/jadwal/:id', async (req, res) => {
   try {
     await prisma.jadwal.delete({ where: { id: req.params.id } });

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { User, Jadwal, Kitab, Soal, Question } from '../types';
-import { UserStore, HalaqahStore, JadwalStore, KitabStore, SoalStore, AbsensiStore, genId } from '../store';
-import { Plus, Trash2, X, BookOpen, Calendar, FileQuestion, CalendarCheck, ExternalLink } from 'lucide-react';
+import { UserStore, HalaqahStore, JadwalStore, KitabStore, SoalStore, AbsensiStore, SubmissionStore, genId } from '../store';
+import { Plus, Trash2, X, BookOpen, Calendar, FileQuestion, CalendarCheck, ExternalLink, Pencil, Search, Eye, EyeOff } from 'lucide-react';
 
 type GuruTab = 'dashboard' | 'jadwal' | 'kitab' | 'soal' | 'rekap';
 
@@ -64,8 +64,6 @@ function formatDate(d: string) {
 function DashboardSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const jadwal = halaqah ? JadwalStore.getByHalaqah(halaqah.id) : [];
-  
-  // PERBAIKAN: Menggunakan getByHalaqah
   const kitab = halaqah ? KitabStore.getByHalaqah(halaqah.id) : [];
   const soal = halaqah ? SoalStore.getByHalaqah(halaqah.id) : [];
   
@@ -99,7 +97,7 @@ function DashboardSection({ user }: { user: User }) {
           {upcoming.slice(0, 3).map(j => (
             <div key={j.id} className="py-2 border-b border-border last:border-0">
               <p className="text-sm font-medium" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-              <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{formatDate(j.date)} · {j.time}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{formatDate(j.date)} · {j.time} {j.endTime ? `- ${j.endTime}` : ''} WITA</p>
             </div>
           ))}
           {upcoming.length === 0 && <p className="text-sm" style={{ color: '#8B7355' }}>Tidak ada jadwal mendatang.</p>}
@@ -114,15 +112,57 @@ function JadwalSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const [jadwal, setJadwal] = useState(() => halaqah ? JadwalStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ date: '', time: '08:00', endTime: '10:00', topic: '', location: '' });
   const [error, setError] = useState('');
 
   const refresh = () => setJadwal(halaqah ? JadwalStore.getByHalaqah(halaqah.id) : []);
 
+  const openCreateModal = () => {
+    setEditId(null);
+    setForm({ date: '', time: '08:00', endTime: '10:00', topic: '', location: '' });
+    setError('');
+    setModal(true);
+  };
+
+  const openEditModal = (j: Jadwal) => {
+    setEditId(j.id);
+    setForm({
+      date: j.date,
+      time: j.time,
+      endTime: j.endTime || '',
+      topic: j.topic,
+      location: j.location || ''
+    });
+    setError('');
+    setModal(true);
+  };
+
   const handleSave = () => {
     if (!form.date || !form.topic.trim()) { setError('Tanggal dan topik wajib diisi.'); return; }
     if (!halaqah) return;
-    JadwalStore.create({ halaqahId: halaqah.id, guruId: user.id, date: form.date, time: form.time, endTime: form.endTime, topic: form.topic.trim(), location: form.location.trim() });
+
+    if (editId) {
+      JadwalStore.update(editId, {
+        halaqahId: halaqah.id,
+        guruId: user.id,
+        date: form.date,
+        time: form.time,
+        endTime: form.endTime,
+        topic: form.topic.trim(),
+        location: form.location.trim()
+      });
+    } else {
+      JadwalStore.create({
+        halaqahId: halaqah.id,
+        guruId: user.id,
+        date: form.date,
+        time: form.time,
+        endTime: form.endTime,
+        topic: form.topic.trim(),
+        location: form.location.trim()
+      });
+    }
     setModal(false);
     refresh();
   };
@@ -140,7 +180,7 @@ function JadwalSection({ user }: { user: User }) {
     <div>
       <PageHeader title="Jadwal Mudarasah" subtitle="Atur jadwal mudarasah untuk halaqah Anda.">
         {halaqah && (
-          <button onClick={() => { setForm({ date: '', time: '08:00', endTime: '10:00', topic: '', location: '' }); setError(''); setModal(true); }} className={btnPrimary} style={{ background: '#0F354D' }}>
+          <button onClick={openCreateModal} className={btnPrimary} style={{ background: '#0F354D' }}>
             <Plus size={16} className="inline mr-1.5" />Buat Jadwal
           </button>
         )}
@@ -170,12 +210,15 @@ function JadwalSection({ user }: { user: User }) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium text-sm" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>{j.time} WITA · {j.location || 'Lokasi tidak disebutkan'}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>
+                      {j.time} {j.endTime ? `- ${j.endTime}` : ''} WITA · {j.location || 'Lokasi tidak disebutkan'}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isToday && <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: '#0F354D', color: '#C9A054' }}>Hari Ini</span>}
                     {isPast && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#EDE8DC', color: '#8B7355' }}>Selesai</span>}
-                    <button onClick={() => handleDelete(j)} className="p-1 rounded hover:bg-red-50 transition" style={{ color: '#C0392B' }}><Trash2 size={14} /></button>
+                    <button onClick={() => openEditModal(j)} className="p-1 rounded hover:bg-muted transition" style={{ color: '#705C3B' }} title="Edit Jadwal"><Pencil size={14} /></button>
+                    <button onClick={() => handleDelete(j)} className="p-1 rounded hover:bg-red-50 transition" style={{ color: '#C0392B' }} title="Hapus Jadwal"><Trash2 size={14} /></button>
                   </div>
                 </div>
               </div>
@@ -190,24 +233,23 @@ function JadwalSection({ user }: { user: User }) {
         )}
       </div>
 
-      <Modal open={modal} title="Buat Jadwal Mudarasah" onClose={() => setModal(false)}>
+      <Modal open={modal} title={editId ? "Edit Jadwal Mudarasah" : "Buat Jadwal Mudarasah"} onClose={() => setModal(false)}>
         {error && <p className="mb-4 text-sm px-3 py-2 rounded-lg" style={{ background: '#FEF2F2', color: '#991B1B' }}>{error}</p>}
         <div className="space-y-4">
-          {/* GANTI BAGIAN INPUT TANGGAL & WAKTU JADI INI: */}
-<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-  <div>
-    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Tanggal</label>
-    <input type="date" className={inputCls} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
-  </div>
-  <div>
-    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Mulai</label>
-    <input type="time" className={inputCls} value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} />
-  </div>
-  <div>
-    <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Selesai</label>
-    <input type="time" className={inputCls} value={form.endTime || ''} onChange={e => setForm({ ...form, endTime: e.target.value })} />
-  </div>
-</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Tanggal</label>
+              <input type="date" className={inputCls} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Mulai</label>
+              <input type="time" className={inputCls} value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Jam Selesai</label>
+              <input type="time" className={inputCls} value={form.endTime || ''} onChange={e => setForm({ ...form, endTime: e.target.value })} />
+            </div>
+          </div>
           <div>
             <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Topik / Materi</label>
             <input className={inputCls} placeholder="cth: Tafsir Surah Al-Mulk Ayat 1-10" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} />
@@ -231,40 +273,35 @@ const COVER_COLORS = ['#0F354D', '#1B4D3E', '#4A3728', '#5C3317', '#2C3E50', '#6
 
 function KitabSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
-  
-  // PERBAIKAN: Menggunakan getByHalaqah
   const [kitab, setKitab] = useState(() => halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
   
   const [form, setForm] = useState({ 
-  title: '', 
-  author: '', 
-  description: '', 
-  fileUrl: '', // <-- Sudah diganti jadi URL text
-  coverColor: '#6B21A8' 
-});
+    title: '', 
+    author: '', 
+    description: '', 
+    fileUrl: '', 
+    coverColor: '#0F354D' 
+  });
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // PERBAIKAN: Menggunakan getByHalaqah
   const refresh = () => setKitab(halaqah ? KitabStore.getByHalaqah(halaqah.id) : []);
 
   const handleSave = async () => {
-    // 1. Cek validasi form
     if (!form.title.trim() || !form.author.trim()) { setError('Judul dan pengarang wajib diisi.'); return; }
-    if (!form.fileUrl.trim()) { setError('Link URL Kitab (GDrive) wajib diisi.'); return; } // <-- Ganti pengecekan pdfFile jadi fileUrl
+    if (!form.fileUrl.trim()) { setError('Link URL Kitab (GDrive) wajib diisi.'); return; }
     if (!halaqah) { setError('Anda belum ditugaskan ke halaqah.'); return; }
 
     setUploading(true);
     try {
-      // 2. Langsung kirim link GDrive-nya ke database, nggak usah pake temporary URL lagi
       KitabStore.create({ 
         title: form.title.trim(), 
         author: form.author.trim(), 
         description: form.description.trim(), 
         guruId: user.id, 
         halaqahId: halaqah.id, 
-        fileUrl: form.fileUrl.trim(), // <-- Langsung pake fileUrl dari form
+        fileUrl: form.fileUrl.trim(), 
         coverColor: form.coverColor 
       });
       
@@ -335,17 +372,16 @@ function KitabSection({ user }: { user: User }) {
             <textarea className={inputCls} rows={2} placeholder="Deskripsi isi kitab..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
           </div>
           
-          {/* GANTI BAGIAN UPLOAD FILE JADI INI: */}
-<div>
-  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Link GDrive Kitab / Materi</label>
-  <input 
-    type="url" 
-    className={inputCls} 
-    placeholder="cth: https://drive.google.com/file/d/..." 
-    value={form.fileUrl} 
-    onChange={e => setForm({ ...form, fileUrl: e.target.value })} 
-  />
-</div>
+          <div>
+            <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Link GDrive Kitab / Materi</label>
+            <input 
+              type="url" 
+              className={inputCls} 
+              placeholder="cth: https://drive.google.com/file/d/..." 
+              value={form.fileUrl} 
+              onChange={e => setForm({ ...form, fileUrl: e.target.value })} 
+            />
+          </div>
 
           <div>
             <label className="block text-sm mb-1.5 font-medium" style={{ color: '#705C3B' }}>Warna Cover</label>
@@ -372,14 +408,17 @@ function SoalSection({ user }: { user: User }) {
   const halaqah = HalaqahStore.getByGuru(user.id);
   const jadwalList = halaqah ? JadwalStore.getByHalaqah(halaqah.id) : [];
   
-  // PERBAIKAN: Menggunakan getByHalaqah
   const [soal, setSoal] = useState(() => halaqah ? SoalStore.getByHalaqah(halaqah.id) : []);
   const [modal, setModal] = useState(false);
   const [viewSoal, setViewSoal] = useState<Soal | null>(null);
+  
+  // State untuk melacak nomor soal mana yang sedang dilihat jawabannya
+  const [selectedQuestion, setSelectedQuestion] = useState<{ question: Question; index: number } | null>(null);
+  const [searchAsatidz, setSearchAsatidz] = useState('');
+
   const [form, setForm] = useState({ title: '', description: '', jadwalId: '', deadline: '', questions: [{ id: genId(), text: '' }] as Question[] });
   const [error, setError] = useState('');
 
-  // PERBAIKAN: Menggunakan getByHalaqah
   const refresh = () => setSoal(halaqah ? SoalStore.getByHalaqah(halaqah.id) : []);
 
   const addQuestion = () => setForm(f => ({ ...f, questions: [...f.questions, { id: genId(), text: '' }] }));
@@ -394,6 +433,11 @@ function SoalSection({ user }: { user: User }) {
     setModal(false);
     refresh();
   };
+
+  const memberIds = halaqah?.memberIds || [];
+  const allUsers = UserStore.getAll();
+  const asatidzMembers = allUsers.filter(u => memberIds.includes(u.id));
+  const submissions = viewSoal ? SubmissionStore.getBySoal(viewSoal.id) : [];
 
   return (
     <div>
@@ -421,7 +465,7 @@ function SoalSection({ user }: { user: User }) {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setViewSoal(s)} className="px-3 py-1.5 rounded-lg text-xs border border-border transition hover:bg-muted" style={{ color: '#705C3B' }}>Lihat</button>
+                  <button onClick={() => { setViewSoal(s); setSelectedQuestion(null); setSearchAsatidz(''); }} className="px-3 py-1.5 rounded-lg text-xs border border-border transition hover:bg-muted font-medium" style={{ color: '#0F354D' }}>Lihat Soal & Jawaban</button>
                   <button onClick={() => { if (confirm(`Hapus soal "${s.title}"?`)) { SoalStore.delete(s.id); refresh(); } }} className="p-1.5 rounded-lg transition hover:bg-red-50" style={{ color: '#C0392B' }}><Trash2 size={14} /></button>
                 </div>
               </div>
@@ -436,19 +480,118 @@ function SoalSection({ user }: { user: User }) {
         )}
       </div>
 
-      {/* View Soal Modal */}
-      <Modal open={!!viewSoal} title={viewSoal?.title || ''} onClose={() => setViewSoal(null)} wide>
+      {/* View Soal & Jawaban Modal */}
+      <Modal open={!!viewSoal} title={viewSoal?.title || ''} onClose={() => { setViewSoal(null); setSelectedQuestion(null); setSearchAsatidz(''); }} wide>
         {viewSoal && (
           <div>
-            {viewSoal.description && <p className="text-sm mb-4" style={{ color: '#705C3B' }}>{viewSoal.description}</p>}
-            <div className="space-y-4">
-              {viewSoal.questions.map((q, i) => (
-                <div key={q.id} className="p-4 rounded-lg border border-border" style={{ background: '#F7F5EC' }}>
-                  <p className="text-sm font-medium mb-1" style={{ color: '#0F354D' }}>Soal {i + 1}</p>
-                  <p className="text-sm" style={{ color: '#3D2C1E' }}>{q.text}</p>
+            {!selectedQuestion ? (
+              /* TAMPILAN DAFTAR SOAL */
+              <div>
+                {viewSoal.description && <p className="text-sm mb-4" style={{ color: '#705C3B' }}>{viewSoal.description}</p>}
+                <div className="space-y-3">
+                  {viewSoal.questions.map((q, i) => {
+                    const answeredCount = submissions.filter(sub => 
+                      sub.answers?.some(a => a.questionId === q.id && a.answer && a.answer.trim() !== '')
+                    ).length;
+
+                    return (
+                      <div key={q.id} className="p-4 rounded-xl border border-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3" style={{ background: '#F7F5EC' }}>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded text-white" style={{ background: '#0F354D' }}>Soal {i + 1}</span>
+                            <span className="text-xs font-medium" style={{ color: '#8B7355' }}>
+                              {answeredCount} / {asatidzMembers.length} Asatidz Menjawab
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium mt-1" style={{ color: '#3D2C1E' }}>{q.text}</p>
+                        </div>
+                        <button
+                          onClick={() => { setSelectedQuestion({ question: q, index: i }); setSearchAsatidz(''); }}
+                          className="px-3.5 py-2 rounded-lg text-xs font-medium text-white transition-all flex items-center justify-center gap-1.5 flex-shrink-0"
+                          style={{ background: '#0F354D' }}
+                        >
+                          <BookOpen size={14} /> Lihat Jawaban
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              /* TAMPILAN JAWABAN ASATIDZ PER NOMOR SOAL */
+              <div>
+                <button
+                  onClick={() => setSelectedQuestion(null)}
+                  className="mb-4 text-xs font-medium px-3 py-1.5 rounded-lg border border-border transition hover:bg-muted inline-flex items-center gap-1"
+                  style={{ color: '#0F354D' }}
+                >
+                  ← Kembali ke Daftar Soal
+                </button>
+
+                <div className="p-4 rounded-xl border border-border mb-4" style={{ background: '#F0EDE3' }}>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded text-white mb-1.5 inline-block" style={{ background: '#0F354D' }}>
+                    Soal Nomor {selectedQuestion.index + 1}
+                  </span>
+                  <p className="text-sm font-semibold" style={{ color: '#3D2C1E' }}>{selectedQuestion.question.text}</p>
+                </div>
+
+                {/* Filter / Pencarian Asatidz */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    className={inputCls}
+                    placeholder="Cari nama asatidz..."
+                    value={searchAsatidz}
+                    onChange={e => setSearchAsatidz(e.target.value)}
+                  />
+                </div>
+
+                {/* List Jawaban Asatidz */}
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                  {asatidzMembers
+                    .filter(m => m.username.toLowerCase().includes(searchAsatidz.toLowerCase()) || m.email.toLowerCase().includes(searchAsatidz.toLowerCase()))
+                    .map(m => {
+                      const userSub = submissions.find(s => s.userId === m.id);
+                      const userAns = userSub?.answers?.find(a => a.questionId === selectedQuestion.question.id)?.answer;
+                      const hasAnswered = !!(userAns && userAns.trim() !== '');
+
+                      return (
+                        <div key={m.id} className="p-4 rounded-xl border border-border bg-card shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-sm" style={{ color: '#3D2C1E' }}>{m.username}</p>
+                              <span className="text-xs" style={{ color: '#8B7355' }}>({m.email})</span>
+                            </div>
+                            {hasAnswered ? (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full font-medium" style={{ background: '#D1FAE5', color: '#065F46' }}>
+                                ✓ Sudah Menjawab
+                              </span>
+                            ) : (
+                              <span className="text-xs px-2.5 py-0.5 rounded-full font-medium" style={{ background: '#F3F4F6', color: '#9CA3AF' }}>
+                                ○ Belum Menjawab
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="p-3 rounded-lg text-xs leading-relaxed" style={{ background: hasAnswered ? '#FDFBF4' : '#FAFAFA', border: '1px solid #EDE8DC', color: hasAnswered ? '#3D2C1E' : '#9CA3AF' }}>
+                            {hasAnswered ? (
+                              <p className="whitespace-pre-wrap">{userAns}</p>
+                            ) : (
+                              <p className="italic">Asatidz ini belum mengirimkan jawaban untuk soal nomor ini.</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {asatidzMembers.filter(m => m.username.toLowerCase().includes(searchAsatidz.toLowerCase())).length === 0 && (
+                    <div className="p-6 text-center text-sm" style={{ color: '#8B7355' }}>
+                      Tidak ada asatidz yang sesuai dengan pencarian "{searchAsatidz}".
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -513,9 +656,7 @@ function RekapAbsensiSection({ user }: { user: User }) {
   const allUsers = UserStore.getAll();
   const members = allUsers.filter(u => memberIds.includes(u.id));
   
-  // State untuk nyimpen data absensi biar bisa me-render ulang pas diedit
   const [allAbsensi, setAllAbsensi] = useState(() => AbsensiStore.getAll());
-  // State untuk modal edit absen
   const [editModal, setEditModal] = useState<{userId: string, jadwalId: string, currentStatus: string | null} | null>(null);
 
   const refreshAbsensi = () => setAllAbsensi(AbsensiStore.getAll());
@@ -565,7 +706,7 @@ function RekapAbsensiSection({ user }: { user: User }) {
 
   return (
     <div>
-      <PageHeader title="Rekap Absensi" subtitle={`Klik pada status kehadiran untuk mengedit absensi asatidz.`} />
+      <PageHeader title="Rekap Absensi" subtitle={`Klik pada status kehadiran untuk mengedit absensi asatidz ${halaqah.name}.`} />
 
       {jadwalList.length === 0 ? (
         <div className="bg-card rounded-xl border border-border p-10 text-center shadow-sm">
