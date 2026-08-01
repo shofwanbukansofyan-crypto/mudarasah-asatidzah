@@ -156,14 +156,15 @@ const [showConfirm, setShowConfirm] = useState(false);
   </div>
 </div>
                 <div>
-  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Password</label>
-  <div className="relative">
-    <input type={showPassword ? "text" : "password"} placeholder="••••••••" className={`${inputCls} pr-10`} value={form.password} onChange={set('password')} />
-    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-    </button>
-  </div>
-</div>
+                  <label className="block text-sm mb-1.5" style={{ color: '#705C3B' }}>Konfirmasi Password</label>
+                  <div className="relative">
+                    <input type={showConfirm ? "text" : "password"} placeholder="Ulangi password" className={`${inputCls} pr-10`} value={form.confirmPassword} onChange={set('confirmPassword')} />
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
+                      {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                
+                </div>
                 <button
                   type="submit"
                   disabled={loading}
