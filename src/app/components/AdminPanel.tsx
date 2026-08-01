@@ -388,7 +388,7 @@ function AkunSection() {
   <div className="relative">
     <input type={showPassword ? "text" : "password"} className={`${inputCls} pr-10`} placeholder="••••••••" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground">
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+      {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
     </button>
   </div>
 </div>

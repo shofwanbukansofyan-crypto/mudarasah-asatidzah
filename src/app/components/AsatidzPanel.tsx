@@ -112,7 +112,7 @@ function BerandaSection({ user }: { user: User }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                <p className="text-xs" style={{ color: '#8B7355' }}>{j.time} wita · {j.location}</p>
+                <p className="text-xs" style={{ color: '#8B7355' }}>{j.time} WITA · {j.location}</p>
               </div>
               {absen && (
                 <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0" style={{
@@ -199,9 +199,9 @@ function AbsensiSection({ user }: { user: User }) {
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div>
                       <p className="font-medium text-sm" style={{ color: '#3D2C1E' }}>{j.topic}</p>
-                      {/* INI BIAR RENTANG JAMNYA NAMPIL (Contoh: 08:00 - 10:00 wita) */}
+                      {/* INI BIAR RENTANG JAMNYA NAMPIL (Contoh: 08:00 - 10:00 WITA) */}
                       <p className="text-xs mt-0.5" style={{ color: '#8B7355' }}>
-                        {formatDate(j.date)} · {j.time} {j.endTime ? `- ${j.endTime}` : ''} wita
+                        {formatDate(j.date)} · {j.time} {j.endTime ? `- ${j.endTime}` : ''} WITA
                       </p>
                       {j.location && <p className="text-xs" style={{ color: '#8B7355' }}>📍 {j.location}</p>}
                     </div>
